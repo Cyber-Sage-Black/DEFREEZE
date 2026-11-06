@@ -5,6 +5,17 @@ export interface QuestionnaireAnswers {
   readinessScore: number;
 }
 
+export interface QuestionnaireResponse {
+  id: string;
+  stuckArea: string;
+  biggestObstacle: string;
+  growthGoal: string;
+  readinessScore: number;
+  userName?: string;
+  userEmail?: string;
+  created_at: string;
+}
+
 export interface Reservation {
   id: string;
   full_name: string;
@@ -12,6 +23,7 @@ export interface Reservation {
   email: string;
   gender: string;
   questionnaire: QuestionnaireAnswers;
+  learning_goals?: string;
   receipt_url: string;
   status: 'pending' | 'confirmed' | 'declined';
   created_at: string;

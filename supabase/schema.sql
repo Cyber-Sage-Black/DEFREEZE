@@ -29,7 +29,7 @@ values (
 )
 on conflict (id) do nothing;
 
--- 2. Reservations Table
+-- 2. Reservations Table (With Learning Goals)
 create table if not exists public.reservations (
   id uuid primary key default uuid_generate_v4(),
   full_name text not null,
@@ -37,13 +37,35 @@ create table if not exists public.reservations (
   email text not null,
   gender text not null,
   questionnaire jsonb default '{}'::jsonb,
+  learning_goals text,
   receipt_url text,
   status text not null default 'pending' check (status in ('pending', 'confirmed', 'declined')),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   confirmed_at timestamp with time zone
 );
 
--- 3. Organizers / Team Profiles Table
+-- 3. Collated Questionnaire Responses for Youth Research
+create table if not exists public.questionnaire_responses (
+  id uuid primary key default uuid_generate_v4(),
+  stuck_area text not null,
+  biggest_obstacle text not null,
+  growth_goal text,
+  readiness_score integer,
+  user_name text,
+  user_email text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Seed initial collated youth insights
+insert into public.questionnaire_responses (stuck_area, biggest_obstacle, growth_goal, readiness_score, user_name)
+values
+('Creative Projects & Ideas', 'Overthinking & analysis paralysis', 'Launch my design portfolio without second-guessing every choice', 9, 'Tobi A.'),
+('Career & Purpose', 'Fear of failure or being judged', 'Transition into tech and speak up in meetings', 10, 'Amaka E.'),
+('Personal Growth & Habits', 'Comparing my progress to everyone else', 'Build a disciplined morning routine and stop doomscrolling', 8, 'David O.'),
+('Taking the First Bold Step', 'Simply not knowing where or how to begin', 'Find clarity and an accountability partner who pushes me forward', 9, 'Anonymous Youth')
+on conflict do nothing;
+
+-- 4. Organizers / Team Profiles Table
 create table if not exists public.organizers (
   id uuid primary key default uuid_generate_v4(),
   name text not null,
@@ -84,6 +106,7 @@ on conflict do nothing;
 -- Enable Row Level Security (RLS)
 alter table public.admin_settings enable row level security;
 alter table public.reservations enable row level security;
+alter table public.questionnaire_responses enable row level security;
 alter table public.organizers enable row level security;
 
 -- Policies for admin_settings:
@@ -110,6 +133,15 @@ create policy "Allow update reservations"
   using (true)
   with check (true);
 
+-- Policies for questionnaire_responses:
+create policy "Anyone can insert questionnaire response"
+  on public.questionnaire_responses for insert
+  with check (true);
+
+create policy "Allow read questionnaire responses"
+  on public.questionnaire_responses for select
+  using (true);
+
 -- Policies for organizers:
 create policy "Public can read organizers"
   on public.organizers for select
@@ -120,7 +152,7 @@ create policy "Allow insert or update organizers"
   using (true)
   with check (true);
 
--- 4. Storage Bucket for Receipts & Profile Images
+-- 5. Storage Buckets
 insert into storage.buckets (id, name, public)
 values ('receipts', 'receipts', true)
 on conflict (id) do nothing;

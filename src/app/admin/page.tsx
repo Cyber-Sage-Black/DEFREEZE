@@ -11,9 +11,10 @@ import {
   getSpotsRemaining,
   getOrganizers,
   saveOrganizer,
-  deleteOrganizer
+  deleteOrganizer,
+  getQuestionnaireResponses
 } from '@/lib/storage';
-import { BankDetails, Reservation, Organizer } from '@/types';
+import { BankDetails, Reservation, Organizer, QuestionnaireResponse } from '@/types';
 import { 
   ShieldCheck, 
   Lock, 
@@ -33,7 +34,10 @@ import {
   Plus,
   Trash2,
   Edit,
-  UploadCloud
+  UploadCloud,
+  Brain,
+  Sparkles,
+  Target
 } from 'lucide-react';
 
 const EMPTY_ORGANIZER: Organizer = {
@@ -63,14 +67,19 @@ export default function AdminPage() {
   });
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
+  const [youthResponses, setYouthResponses] = useState<QuestionnaireResponse[]>([]);
   const [spotsData, setSpotsData] = useState({ remaining: 25, total: 25, confirmedCount: 0 });
   
   // Filter & Search
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [surveySearch, setSurveySearch] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<Reservation | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Active view tab in admin: 'reservations' | 'youth_insights' | 'organizers' | 'bank'
+  const [activeTab, setActiveTab] = useState<'reservations' | 'youth_insights' | 'organizers' | 'bank'>('reservations');
 
   // Organizer Modal Form State
   const [showOrgModal, setShowOrgModal] = useState(false);
@@ -90,16 +99,18 @@ export default function AdminPage() {
 
   // Fetch data
   const loadData = async () => {
-    const [settings, resList, spots, orgList] = await Promise.all([
+    const [settings, resList, spots, orgList, questList] = await Promise.all([
       getBankSettings(),
       getReservations(),
       getSpotsRemaining(),
       getOrganizers(),
+      getQuestionnaireResponses(),
     ]);
     setBankSettings(settings);
     setReservations(resList);
     setSpotsData(spots);
     setOrganizers(orgList);
+    setYouthResponses(questList);
   };
 
   useEffect(() => {
@@ -190,9 +201,10 @@ export default function AdminPage() {
     await loadData();
   };
 
-  const exportCSV = () => {
+  // CSV Exports
+  const exportReservationsCSV = () => {
     if (!reservations.length) return;
-    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Gender', 'Status', 'Stuck Area', 'Readiness', 'Created At'];
+    const headers = ['ID', 'Full Name', 'Email', 'Phone', 'Gender', 'Status', 'Stuck Area', 'Readiness', 'Learning Goals', 'Created At'];
     const rows = reservations.map((r) => [
       r.id,
       `"${r.full_name}"`,
@@ -202,6 +214,7 @@ export default function AdminPage() {
       r.status,
       `"${r.questionnaire?.stuckArea || ''}"`,
       r.questionnaire?.readinessScore || '',
+      `"${(r.learning_goals || '').replace(/"/g, '""')}"`,
       r.created_at,
     ]);
 
@@ -215,15 +228,51 @@ export default function AdminPage() {
     document.body.removeChild(link);
   };
 
+  const exportYouthSurveyCSV = () => {
+    if (!youthResponses.length) return;
+    const headers = ['ID', 'Respondent', 'Email', 'Stuck Area', 'Biggest Obstacle', 'Growth Goal / Vision', 'Readiness Score', 'Date'];
+    const rows = youthResponses.map((q) => [
+      q.id,
+      `"${q.userName || 'Anonymous'}"`,
+      `"${q.userEmail || 'N/A'}"`,
+      `"${q.stuckArea}"`,
+      `"${q.biggestObstacle}"`,
+      `"${(q.growthGoal || '').replace(/"/g, '""')}"`,
+      q.readinessScore,
+      q.created_at,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `defreeze-youth-insights-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Filter reservations
   const filteredReservations = reservations.filter((r) => {
     const matchesFilter = filter === 'all' ? true : r.status === filter;
     const matchesSearch = 
       r.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.phone.includes(searchQuery);
+      r.phone.includes(searchQuery) ||
+      (r.learning_goals && r.learning_goals.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFilter && matchesSearch;
   });
+
+  // Filter youth responses
+  const filteredYouthResponses = youthResponses.filter((q) => {
+    const qStr = (q.stuckArea + ' ' + q.biggestObstacle + ' ' + (q.growthGoal || '') + ' ' + (q.userName || '')).toLowerCase();
+    return qStr.includes(surveySearch.toLowerCase());
+  });
+
+  // Insights Calculations
+  const avgReadiness = youthResponses.length
+    ? (youthResponses.reduce((acc, curr) => acc + (curr.readinessScore || 0), 0) / youthResponses.length).toFixed(1)
+    : '0';
 
   // Login Screen
   if (!isAuthenticated) {
@@ -239,7 +288,7 @@ export default function AdminPage() {
               DEFREEZE Admin Portal
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Enter authorized administrator passcode to manage reservations, bank accounts &amp; team.
+              Enter authorized administrator passcode to manage reservations, youth insights &amp; team.
             </p>
           </div>
 
@@ -286,7 +335,7 @@ export default function AdminPage() {
               <span className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
                 DEFREEZE <span className="text-xs text-cyan-400 font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800">Admin Control</span>
               </span>
-              <p className="text-[11px] text-slate-400">Review receipts, manage bank details, team profiles &amp; track 25-spot countdown</p>
+              <p className="text-[11px] text-slate-400">Review receipts, collate youth questions, manage team profiles &amp; bank details</p>
             </div>
           </div>
 
@@ -309,10 +358,61 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Navigation Tabs Bar */}
+        <div className="max-w-7xl mx-auto mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto text-xs font-semibold">
+          <button
+            onClick={() => setActiveTab('reservations')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'reservations'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Reservations &amp; Receipts ({reservations.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('youth_insights')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'youth_insights'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <Brain className="w-4 h-4" />
+            <span>Youth Mindset Insights ({youthResponses.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('organizers')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'organizers'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Organizers Team ({organizers.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('bank')}
+            className={`px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
+              activeTab === 'bank'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Bank &amp; Capacity</span>
+          </button>
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
-        {/* Metric Cards */}
+        {/* Metric Cards Banner */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="p-5 rounded-2xl ice-glass border border-cyan-500/20 space-y-2">
             <span className="text-xs font-mono uppercase text-slate-400 flex items-center gap-1.5">
@@ -344,6 +444,17 @@ export default function AdminPage() {
 
           <div className="p-5 rounded-2xl ice-glass border border-cyan-500/20 space-y-2">
             <span className="text-xs font-mono uppercase text-slate-400 flex items-center gap-1.5">
+              <Brain className="w-4 h-4 text-cyan-400" />
+              Collated Youth Surveys
+            </span>
+            <div className="text-3xl font-black text-cyan-300 font-mono">
+              {youthResponses.length}
+            </div>
+            <span className="text-[11px] text-slate-400">Avg Readiness: {avgReadiness}/10</span>
+          </div>
+
+          <div className="p-5 rounded-2xl ice-glass border border-cyan-500/20 space-y-2">
+            <span className="text-xs font-mono uppercase text-slate-400 flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-amber-400" />
               Pending Payment Review
             </span>
@@ -352,379 +463,488 @@ export default function AdminPage() {
             </div>
             <span className="text-[11px] text-slate-400">Awaiting receipt verification</span>
           </div>
-
-          <div className="p-5 rounded-2xl ice-glass border border-cyan-500/20 space-y-2">
-            <span className="text-xs font-mono uppercase text-slate-400 flex items-center gap-1.5">
-              <DollarSign className="w-4 h-4 text-cyan-400" />
-              Configured Ticket Price
-            </span>
-            <div className="text-2xl font-black text-white font-mono">
-              {bankSettings.amount || '₦15,000'}
-            </div>
-            <span className="text-[11px] text-slate-400">Editable below in realtime</span>
-          </div>
         </div>
 
-        {/* SECTION: EDITABLE BANK DETAILS */}
-        <section className="p-6 sm:p-8 rounded-3xl ice-glass-glow border border-cyan-500/30 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
-            <div>
-              <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider block">
-                Live Checkout Configuration
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-                Bank Details &amp; Spot Limit Manager
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Changes saved here reflect immediately on the user-facing payment page.
-              </p>
-            </div>
-
-            {saveSuccess && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/40 animate-pulse">
-                <CheckCircle className="w-4 h-4" />
-                <span>Bank Details Updated Successfully!</span>
+        {/* VIEW 1: RESERVATIONS REVIEW TABLE */}
+        {activeTab === 'reservations' && (
+          <section className="space-y-4 animate-in fade-in duration-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                  Attendee Reservations, Learning Goals &amp; Receipts
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Click &quot;Payment Confirmed&quot; on verified submissions to decrement the 25-spot countdown.
+                </p>
               </div>
-            )}
-          </div>
 
-          <form onSubmit={handleSaveBankSettings} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Bank Name
-              </label>
-              <input
-                type="text"
-                required
-                value={bankSettings.bank_name}
-                onChange={(e) => setBankSettings({ ...bankSettings, bank_name: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Account Number
-              </label>
-              <input
-                type="text"
-                required
-                value={bankSettings.account_number}
-                onChange={(e) => setBankSettings({ ...bankSettings, account_number: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-mono text-xs focus:outline-none focus:border-cyan-400 font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Account Name
-              </label>
-              <input
-                type="text"
-                required
-                value={bankSettings.account_name}
-                onChange={(e) => setBankSettings({ ...bankSettings, account_name: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Amount (Copiable)
-              </label>
-              <input
-                type="text"
-                required
-                value={bankSettings.amount}
-                onChange={(e) => setBankSettings({ ...bankSettings, amount: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 font-mono text-xs focus:outline-none focus:border-cyan-400 font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Capacity Capped At
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  required
-                  value={bankSettings.total_spots}
-                  onChange={(e) => setBankSettings({ ...bankSettings, total_spots: parseInt(e.target.value) || 25 })}
-                  className="w-24 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-400 font-bold text-center"
-                />
-                <button
-                  type="submit"
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Save</span>
-                </button>
-              </div>
-            </div>
-          </form>
-        </section>
-
-        {/* SECTION: ORGANIZERS & TEAM PROFILES MANAGEMENT */}
-        <section className="p-6 sm:p-8 rounded-3xl ice-glass-glow border border-cyan-500/30 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
-            <div>
-              <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider block">
-                Team &amp; Organizers
-              </span>
-              <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-                About The Organizers Profiles
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Add, edit, or remove team profiles, upload headshots directly, and attach social media accounts.
-              </p>
-            </div>
-
-            <button
-              onClick={handleOpenNewOrganizer}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-cyan-500/25 transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Organizer Profile</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {organizers.map((org) => (
-              <div
-                key={org.id}
-                className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-cyan-500/40 transition-colors"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-cyan-400/50 bg-slate-950 flex-shrink-0">
-                      <Image
-                        src={org.image_url || '/images/defreeze-logo.png'}
-                        alt={org.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-white text-base">{org.name}</h4>
-                      <p className="text-xs text-cyan-300 font-medium">{org.role}</p>
-                    </div>
-                  </div>
-
-                  {org.bio && (
-                    <p className="text-xs text-slate-400 line-clamp-2 italic">
-                      &ldquo;{org.bio}&rdquo;
-                    </p>
-                  )}
-
-                  {/* Social tags */}
-                  <div className="flex flex-wrap gap-1.5 text-[10px] text-slate-400 font-mono">
-                    {org.instagram && <span className="px-2 py-0.5 rounded bg-slate-800">IG: {org.instagram.replace('https://instagram.com/', '@')}</span>}
-                    {org.twitter && <span className="px-2 py-0.5 rounded bg-slate-800">X: {org.twitter.replace('https://x.com/', '@')}</span>}
-                    {org.whatsapp && <span className="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400">WA: {org.whatsapp}</span>}
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Filter tabs */}
+                <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold">
                   <button
-                    onClick={() => handleEditOrganizer(org)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 transition-colors cursor-pointer"
+                    onClick={() => setFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'all' ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400'}`}
                   >
-                    <Edit className="w-3.5 h-3.5" />
-                    <span>Edit</span>
+                    All ({reservations.length})
                   </button>
-
                   <button
-                    onClick={() => handleDeleteOrganizer(org.id, org.name)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/50 text-xs text-red-300 transition-colors cursor-pointer"
+                    onClick={() => setFilter('pending')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400'}`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete</span>
+                    Pending ({reservations.filter((r) => r.status === 'pending').length})
+                  </button>
+                  <button
+                    onClick={() => setFilter('confirmed')}
+                    className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400'}`}
+                  >
+                    Confirmed ({reservations.filter((r) => r.status === 'confirmed').length})
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
 
-        {/* SECTION: RESERVATIONS REVIEW TABLE */}
-        <section className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-                Attendee Reservations &amp; Receipts
-              </h2>
-              <p className="text-xs text-slate-400">
-                Click &quot;Payment Confirmed&quot; on verified submissions to decrement the 25-spot countdown.
-              </p>
+                {/* Search */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search attendee or goals..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 w-48"
+                  />
+                </div>
+
+                {/* Export */}
+                <button
+                  onClick={exportReservationsCSV}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Attendees</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Filter tabs */}
-              <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800 text-xs font-semibold">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'all' ? 'bg-cyan-500/20 text-cyan-300' : 'text-slate-400'}`}
-                >
-                  All ({reservations.length})
-                </button>
-                <button
-                  onClick={() => setFilter('pending')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400'}`}
-                >
-                  Pending ({reservations.filter((r) => r.status === 'pending').length})
-                </button>
-                <button
-                  onClick={() => setFilter('confirmed')}
-                  className={`px-3 py-1.5 rounded-lg transition-all ${filter === 'confirmed' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400'}`}
-                >
-                  Confirmed ({reservations.filter((r) => r.status === 'confirmed').length})
-                </button>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search attendee..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 w-44"
-                />
-              </div>
-
-              {/* Export */}
-              <button
-                onClick={exportCSV}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export CSV</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Table Container */}
-          <div className="ice-glass rounded-3xl border border-cyan-500/20 overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/80 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
-                  <tr>
-                    <th className="py-3.5 px-4">Attendee</th>
-                    <th className="py-3.5 px-4">Contact</th>
-                    <th className="py-3.5 px-4">Gender</th>
-                    <th className="py-3.5 px-4">Mindset Check-in</th>
-                    <th className="py-3.5 px-4">Receipt Proof</th>
-                    <th className="py-3.5 px-4">Status</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {filteredReservations.length === 0 ? (
+            {/* Table Container */}
+            <div className="ice-glass rounded-3xl border border-cyan-500/20 overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900/80 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-slate-500">
-                        No reservations found matching current filter.
-                      </td>
+                      <th className="py-3.5 px-4">Attendee</th>
+                      <th className="py-3.5 px-4">Contact</th>
+                      <th className="py-3.5 px-4">Gender</th>
+                      <th className="py-3.5 px-4">Mindset Check-in &amp; Goals</th>
+                      <th className="py-3.5 px-4">Receipt Proof</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
-                  ) : (
-                    filteredReservations.map((res) => (
-                      <tr key={res.id} className="hover:bg-slate-900/40 transition-colors">
-                        <td className="py-4 px-4 font-semibold text-white">
-                          <div className="flex flex-col">
-                            <span>{res.full_name}</span>
-                            <span className="text-[10px] text-slate-500 font-mono">
-                              {res.created_at ? res.created_at.slice(0, 10) : ''}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="py-4 px-4">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-slate-300">{res.email}</span>
-                            <a
-                              href={`https://wa.me/${res.phone.replace(/[^0-9]/g, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:underline"
-                            >
-                              <MessageCircle className="w-3 h-3 text-emerald-400" />
-                              <span>{res.phone}</span>
-                            </a>
-                          </div>
-                        </td>
-
-                        <td className="py-4 px-4 text-slate-300">{res.gender}</td>
-
-                        <td className="py-4 px-4">
-                          {res.questionnaire ? (
-                            <button
-                              onClick={() => setSelectedQuestionnaire(res)}
-                              className="text-left group"
-                            >
-                              <span className="block text-cyan-300 group-hover:underline font-medium">
-                                {res.questionnaire.stuckArea || 'View Answers'}
-                              </span>
-                              <span className="text-[10px] text-slate-500">
-                                Readiness: {res.questionnaire.readinessScore || 'N/A'}/10 • Click for details
-                              </span>
-                            </button>
-                          ) : (
-                            <span className="text-slate-500 italic">None</span>
-                          )}
-                        </td>
-
-                        <td className="py-4 px-4">
-                          {res.receipt_url ? (
-                            <button
-                              onClick={() => setSelectedReceipt(res.receipt_url)}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition-colors"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>View Receipt</span>
-                            </button>
-                          ) : (
-                            <span className="text-slate-500 italic">No receipt</span>
-                          )}
-                        </td>
-
-                        <td className="py-4 px-4">
-                          {res.status === 'confirmed' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30 text-[11px]">
-                              <CheckCircle className="w-3 h-3" />
-                              <span>Confirmed</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30 text-[11px]">
-                              <Clock className="w-3 h-3" />
-                              <span>Pending Review</span>
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="py-4 px-4 text-right">
-                          {res.status !== 'confirmed' ? (
-                            <button
-                              onClick={() => handleConfirmPayment(res.id, res.full_name)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
-                            >
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              <span>Payment Confirmed</span>
-                            </button>
-                          ) : (
-                            <span className="text-[11px] text-slate-500 font-mono">Spot Allocated</span>
-                          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredReservations.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="text-center py-12 text-slate-500">
+                          No reservations found matching current filter.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filteredReservations.map((res) => (
+                        <tr key={res.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-4 px-4 font-semibold text-white">
+                            <div className="flex flex-col">
+                              <span>{res.full_name}</span>
+                              <span className="text-[10px] text-slate-500 font-mono">
+                                {res.created_at ? res.created_at.slice(0, 10) : ''}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-slate-300">{res.email}</span>
+                              <a
+                                href={`https://wa.me/${res.phone.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] text-cyan-400 hover:underline"
+                              >
+                                <MessageCircle className="w-3 h-3 text-emerald-400" />
+                                <span>{res.phone}</span>
+                              </a>
+                            </div>
+                          </td>
+
+                          <td className="py-4 px-4 text-slate-300">{res.gender}</td>
+
+                          <td className="py-4 px-4">
+                            <button
+                              onClick={() => setSelectedQuestionnaire(res)}
+                              className="text-left group block"
+                            >
+                              <span className="block text-cyan-300 group-hover:underline font-medium">
+                                {res.questionnaire?.stuckArea || 'View Answers'}
+                              </span>
+                              {res.learning_goals ? (
+                                <span className="block text-[11px] text-emerald-300 font-semibold line-clamp-1 mt-0.5">
+                                  Goal: &ldquo;{res.learning_goals}&rdquo;
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-500">
+                                  Readiness: {res.questionnaire?.readinessScore || 'N/A'}/10 • Click for details
+                                </span>
+                              )}
+                            </button>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            {res.receipt_url ? (
+                              <button
+                                onClick={() => setSelectedReceipt(res.receipt_url)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-950/60 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition-colors cursor-pointer"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>View Receipt</span>
+                              </button>
+                            ) : (
+                              <span className="text-slate-500 italic">No receipt</span>
+                            )}
+                          </td>
+
+                          <td className="py-4 px-4">
+                            {res.status === 'confirmed' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30 text-[11px]">
+                                <CheckCircle className="w-3 h-3" />
+                                <span>Confirmed</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30 text-[11px]">
+                                <Clock className="w-3 h-3" />
+                                <span>Pending Review</span>
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-4 px-4 text-right">
+                            {res.status !== 'confirmed' ? (
+                              <button
+                                onClick={() => handleConfirmPayment(res.id, res.full_name)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                <span>Payment Confirmed</span>
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-500 font-mono">Spot Allocated</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
+
+        {/* VIEW 2: COLLATED YOUTH MINDSET INSIGHTS */}
+        {activeTab === 'youth_insights' && (
+          <section className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider block">
+                  Youth Intelligence &amp; Mindset Survey
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                  Collated Responses from New Visitors
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Real-time data from young people taking the landing questionnaire — uncovering their frozen areas, obstacles, and ambitions.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search responses..."
+                    value={surveySearch}
+                    onChange={(e) => setSurveySearch(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 w-44"
+                  />
+                </div>
+
+                <button
+                  onClick={exportYouthSurveyCSV}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Survey CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Analytics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-2xl ice-glass border border-cyan-500/20 space-y-1">
+                <span className="text-[11px] font-mono text-slate-400 uppercase">Total Survey Responses</span>
+                <div className="text-2xl font-black text-white font-mono">{youthResponses.length}</div>
+                <span className="text-[10px] text-cyan-300">Logged from landing visitors</span>
+              </div>
+              <div className="p-4 rounded-2xl ice-glass border border-cyan-500/20 space-y-1">
+                <span className="text-[11px] font-mono text-slate-400 uppercase">Average Readiness Score</span>
+                <div className="text-2xl font-black text-emerald-400 font-mono">{avgReadiness} / 10</div>
+                <span className="text-[10px] text-slate-400">High desire to step out of comfort zone</span>
+              </div>
+              <div className="p-4 rounded-2xl ice-glass border border-cyan-500/20 space-y-1">
+                <span className="text-[11px] font-mono text-slate-400 uppercase">Top Reported Obstacle</span>
+                <div className="text-sm font-bold text-cyan-200 line-clamp-1">Overthinking &amp; Analysis Paralysis</div>
+                <span className="text-[10px] text-slate-400">Followed by fear of failure</span>
+              </div>
+            </div>
+
+            {/* Collated Responses Table */}
+            <div className="ice-glass rounded-3xl border border-cyan-500/20 overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900/80 text-slate-400 font-mono uppercase tracking-wider border-b border-slate-800">
+                    <tr>
+                      <th className="py-3.5 px-4">Date</th>
+                      <th className="py-3.5 px-4">Visitor</th>
+                      <th className="py-3.5 px-4">Area That Feels Frozen</th>
+                      <th className="py-3.5 px-4">Biggest Obstacle</th>
+                      <th className="py-3.5 px-4">Breakthrough Goal / Vision</th>
+                      <th className="py-3.5 px-4 text-center">Readiness</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredYouthResponses.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-10 text-slate-500">
+                          No survey responses match your query.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredYouthResponses.map((qr) => (
+                        <tr key={qr.id} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-3.5 px-4 text-slate-500 font-mono whitespace-nowrap">
+                            {qr.created_at ? qr.created_at.slice(0, 10) : ''}
+                          </td>
+                          <td className="py-3.5 px-4 font-semibold text-white">
+                            <div>{qr.userName || 'Visitor'}</div>
+                            {qr.userEmail && <span className="text-[10px] text-slate-400">{qr.userEmail}</span>}
+                          </td>
+                          <td className="py-3.5 px-4 text-cyan-300 font-medium">
+                            {qr.stuckArea}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-300">
+                            {qr.biggestObstacle}
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-200 italic max-w-xs">
+                            &ldquo;{qr.growthGoal || 'No goal written'}&rdquo;
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 font-bold font-mono">
+                              {qr.readinessScore}/10
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* VIEW 3: ORGANIZERS & TEAM PROFILES MANAGEMENT */}
+        {activeTab === 'organizers' && (
+          <section className="p-6 sm:p-8 rounded-3xl ice-glass-glow border border-cyan-500/30 space-y-6 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+              <div>
+                <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider block">
+                  Team &amp; Organizers
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                  About The Organizers Profiles
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Add, edit, or remove team profiles, upload headshots directly, and attach social media accounts.
+                </p>
+              </div>
+
+              <button
+                onClick={handleOpenNewOrganizer}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-cyan-500/25 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Organizer Profile</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {organizers.map((org) => (
+                <div
+                  key={org.id}
+                  className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-cyan-500/40 transition-colors"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-cyan-400/50 bg-slate-950 flex-shrink-0">
+                        <Image
+                          src={org.image_url || '/images/defreeze-logo.png'}
+                          alt={org.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-white text-base">{org.name}</h4>
+                        <p className="text-xs text-cyan-300 font-medium">{org.role}</p>
+                      </div>
+                    </div>
+
+                    {org.bio && (
+                      <p className="text-xs text-slate-400 line-clamp-2 italic">
+                        &ldquo;{org.bio}&rdquo;
+                      </p>
+                    )}
+
+                    {/* Social tags */}
+                    <div className="flex flex-wrap gap-1.5 text-[10px] text-slate-400 font-mono">
+                      {org.instagram && <span className="px-2 py-0.5 rounded bg-slate-800">IG: {org.instagram.replace('https://instagram.com/', '@')}</span>}
+                      {org.twitter && <span className="px-2 py-0.5 rounded bg-slate-800">X: {org.twitter.replace('https://x.com/', '@')}</span>}
+                      {org.whatsapp && <span className="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400">WA: {org.whatsapp}</span>}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <button
+                      onClick={() => handleEditOrganizer(org)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 transition-colors cursor-pointer"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteOrganizer(org.id, org.name)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/50 text-xs text-red-300 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* VIEW 4: EDITABLE BANK DETAILS */}
+        {activeTab === 'bank' && (
+          <section className="p-6 sm:p-8 rounded-3xl ice-glass-glow border border-cyan-500/30 space-y-6 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+              <div>
+                <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider block">
+                  Live Checkout Configuration
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                  Bank Details &amp; Spot Limit Manager
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Changes saved here reflect immediately on the user-facing payment page.
+                </p>
+              </div>
+
+              {saveSuccess && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/40 animate-pulse">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Bank Details Updated Successfully!</span>
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleSaveBankSettings} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Bank Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankSettings.bank_name}
+                  onChange={(e) => setBankSettings({ ...bankSettings, bank_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankSettings.account_number}
+                  onChange={(e) => setBankSettings({ ...bankSettings, account_number: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-cyan-300 font-mono text-xs focus:outline-none focus:border-cyan-400 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Account Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankSettings.account_name}
+                  onChange={(e) => setBankSettings({ ...bankSettings, account_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Amount (Copiable)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankSettings.amount}
+                  onChange={(e) => setBankSettings({ ...bankSettings, amount: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-emerald-300 font-mono text-xs focus:outline-none focus:border-cyan-400 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                  Capacity Capped At
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    required
+                    value={bankSettings.total_spots}
+                    onChange={(e) => setBankSettings({ ...bankSettings, total_spots: parseInt(e.target.value) || 25 })}
+                    className="w-24 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-cyan-400 font-bold text-center"
+                  />
+                  <button
+                    type="submit"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+        )}
       </main>
 
       {/* MODAL: ORGANIZER PROFILE EDITOR / CREATOR */}
@@ -886,7 +1106,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setShowOrgModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -908,7 +1128,7 @@ export default function AdminPage() {
           <div className="relative max-w-2xl max-h-[90vh] bg-slate-950 p-4 rounded-3xl border border-cyan-500/30 overflow-hidden flex flex-col items-center">
             <button
               onClick={() => setSelectedReceipt(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-300 hover:text-white"
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -925,19 +1145,19 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* MODAL: QUESTIONNAIRE DETAILS */}
+      {/* MODAL: QUESTIONNAIRE & LEARNING GOALS DETAILS */}
       {selectedQuestionnaire && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="relative max-w-lg w-full ice-glass-glow rounded-3xl p-6 border border-cyan-500/30 text-white space-y-4">
             <button
               onClick={() => setSelectedQuestionnaire(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-300 hover:text-white"
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-300 hover:text-white cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-cyan-400" />
-              <span>Mindset Check-in: {selectedQuestionnaire.full_name}</span>
+              <span>Attendee Profile: {selectedQuestionnaire.full_name}</span>
             </h3>
 
             <div className="space-y-3 bg-slate-900/80 p-4 rounded-2xl border border-slate-800 text-xs leading-relaxed">
@@ -950,7 +1170,7 @@ export default function AdminPage() {
                 <span className="text-slate-200">{selectedQuestionnaire.questionnaire?.biggestObstacle || 'N/A'}</span>
               </div>
               <div>
-                <span className="text-slate-400 block font-semibold">3. What they hope to unlock/experience:</span>
+                <span className="text-slate-400 block font-semibold">3. Desired breakthrough:</span>
                 <p className="text-white italic mt-0.5 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
                   &ldquo;{selectedQuestionnaire.questionnaire?.growthGoal || 'No response provided'}&rdquo;
                 </p>
@@ -960,6 +1180,19 @@ export default function AdminPage() {
                 <span className="text-emerald-400 font-mono font-bold text-sm">
                   {selectedQuestionnaire.questionnaire?.readinessScore || 'N/A'} / 10
                 </span>
+              </div>
+              <div className="pt-2 border-t border-slate-800">
+                <span className="text-cyan-400 block font-bold flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5" />
+                  <span>5. Program Expectations / What they want to learn:</span>
+                </span>
+                <p className="text-white font-medium mt-1 bg-cyan-950/40 p-3 rounded-xl border border-cyan-500/30">
+                  {selectedQuestionnaire.learning_goals ? (
+                    `“${selectedQuestionnaire.learning_goals}”`
+                  ) : (
+                    <span className="text-slate-500 italic">No specific learning goals submitted yet.</span>
+                  )}
+                </p>
               </div>
             </div>
 

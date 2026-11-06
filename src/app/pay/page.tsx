@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import { BankDetails, QuestionnaireAnswers, Reservation } from '@/types';
-import { getBankSettings, createReservation } from '@/lib/storage';
+import { getBankSettings, createReservation, updateReservationLearningGoals } from '@/lib/storage';
 import { 
   Copy, 
   Check, 
@@ -53,6 +53,11 @@ export default function PaymentPage() {
   const [receiptPreview, setReceiptPreview] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedReservation, setSubmittedReservation] = useState<Reservation | null>(null);
+
+  // Program Expectations & Learning Goals State
+  const [learningGoalsInput, setLearningGoalsInput] = useState('');
+  const [isSavingGoals, setIsSavingGoals] = useState(false);
+  const [goalsSaved, setGoalsSaved] = useState(false);
 
   // Load user data & bank settings on mount
   useEffect(() => {
@@ -127,6 +132,20 @@ export default function PaymentPage() {
       alert('Unable to submit reservation. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveLearningGoals = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!learningGoalsInput.trim() || !submittedReservation) return;
+    setIsSavingGoals(true);
+    try {
+      await updateReservationLearningGoals(submittedReservation.id, learningGoalsInput.trim());
+      setGoalsSaved(true);
+    } catch (err) {
+      console.error('Failed to save learning goals:', err);
+    } finally {
+      setIsSavingGoals(false);
     }
   };
 
@@ -480,6 +499,56 @@ export default function PaymentPage() {
                 <div className="pt-3 border-t border-slate-800 text-xs italic text-slate-400">
                   &ldquo;Come as you are, leave a little lighter.&rdquo;
                 </div>
+              </div>
+
+              {/* PROGRAM LEARNING EXPECTATIONS PROMPT */}
+              <div className="p-6 rounded-3xl bg-gradient-to-b from-blue-950/60 to-slate-900/80 border border-cyan-400/40 text-left max-w-lg mx-auto space-y-3.5 shadow-xl">
+                <div>
+                  <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest block">
+                    Tailor Your Experience
+                  </span>
+                  <h4 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                    What are you most looking forward to getting or learning at DEFREEZE?
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Tell us what breakthroughs or insights you want to walk away with. Our curators will use this to personalize your games and challenge pairings!
+                  </p>
+                </div>
+
+                {!goalsSaved ? (
+                  <form onSubmit={handleSaveLearningGoals} className="space-y-3">
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="e.g. I want to conquer fear of speaking up, build a tight accountability squad, and stop second-guessing my business ideas..."
+                      value={learningGoalsInput}
+                      onChange={(e) => setLearningGoalsInput(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-400 leading-relaxed"
+                    />
+
+                    <button
+                      type="submit"
+                      disabled={isSavingGoals || !learningGoalsInput.trim()}
+                      className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                        learningGoalsInput.trim() && !isSavingGoals
+                          ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-md shadow-cyan-500/20 hover:scale-[1.01]'
+                          : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {isSavingGoals ? 'Saving for Facilitators...' : 'Submit My Program Goals'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-start gap-2.5">
+                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="block font-bold">Goals Logged for the Facilitators!</span>
+                      <span className="text-[11px] text-slate-300 font-normal">
+                        Your expectations have been attached to your reservation record. We can&apos;t wait to see you thrive!
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-400 uppercase">

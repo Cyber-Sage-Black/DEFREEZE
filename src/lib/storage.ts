@@ -1,4 +1,4 @@
-import { BankDetails, Reservation, Organizer } from '@/types';
+import { BankDetails, Reservation, Organizer, QuestionnaireAnswers, QuestionnaireResponse } from '@/types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 const DEFAULT_BANK_DETAILS: BankDetails = {
@@ -22,6 +22,7 @@ const INITIAL_LOCAL_RESERVATIONS: Reservation[] = [
       growthGoal: 'Stop procrastinating and launch my creative agency',
       readinessScore: 9,
     },
+    learning_goals: 'Master pitching creative projects with unwavering confidence and build a strong accountability circle.',
     receipt_url: '/images/defreeze-flyer-friends.jpg',
     status: 'confirmed',
     created_at: '2026-11-04T10:00:00.000Z',
@@ -39,6 +40,7 @@ const INITIAL_LOCAL_RESERVATIONS: Reservation[] = [
       growthGoal: 'Build self-confidence and an intentional accountability circle',
       readinessScore: 10,
     },
+    learning_goals: 'Learn psychological techniques to speak up without anxiety and lead teams boldly.',
     receipt_url: '/images/defreeze-flyer-ice.jpg',
     status: 'confirmed',
     created_at: '2026-11-05T09:30:00.000Z',
@@ -56,9 +58,61 @@ const INITIAL_LOCAL_RESERVATIONS: Reservation[] = [
       growthGoal: 'Learn to play, breathe, and trust my own path',
       readinessScore: 8,
     },
+    learning_goals: 'Discover how to stop social comparison and build solid daily habits.',
     receipt_url: '/images/defreeze-flyer-friends.jpg',
     status: 'pending',
     created_at: '2026-11-06T14:15:00.000Z',
+  },
+];
+
+const INITIAL_QUESTIONNAIRE_RESPONSES: QuestionnaireResponse[] = [
+  {
+    id: 'qr-1',
+    stuckArea: 'Creative Projects & Ideas',
+    biggestObstacle: 'Overthinking & analysis paralysis',
+    growthGoal: 'Launch my design portfolio without second-guessing every choice',
+    readinessScore: 9,
+    userName: 'Tobi A.',
+    userEmail: 'tobi@example.com',
+    created_at: '2026-11-04T09:45:00.000Z',
+  },
+  {
+    id: 'qr-2',
+    stuckArea: 'Career & Purpose',
+    biggestObstacle: 'Fear of failure or being judged',
+    growthGoal: 'Transition into tech and speak up in high-stakes meetings',
+    readinessScore: 10,
+    userName: 'Amaka E.',
+    userEmail: 'amaka@example.com',
+    created_at: '2026-11-05T09:15:00.000Z',
+  },
+  {
+    id: 'qr-3',
+    stuckArea: 'Personal Growth & Habits',
+    biggestObstacle: 'Comparing my progress to everyone else',
+    growthGoal: 'Build a disciplined morning routine and stop doomscrolling',
+    readinessScore: 8,
+    userName: 'David O.',
+    userEmail: 'david.o@example.com',
+    created_at: '2026-11-06T14:00:00.000Z',
+  },
+  {
+    id: 'qr-4',
+    stuckArea: 'Taking the First Bold Step',
+    biggestObstacle: 'Simply not knowing where or how to begin',
+    growthGoal: 'Find clarity, community, and accountability partners who push me forward',
+    readinessScore: 9,
+    userName: 'Website Visitor',
+    created_at: '2026-11-06T16:30:00.000Z',
+  },
+  {
+    id: 'qr-5',
+    stuckArea: 'Confidence & Relationships',
+    biggestObstacle: 'Fear of failure or being judged',
+    growthGoal: 'Stop hiding in social gatherings and make genuine connections',
+    readinessScore: 7,
+    userName: 'Anonymous Youth',
+    created_at: '2026-11-06T17:10:00.000Z',
   },
 ];
 
@@ -91,6 +145,7 @@ const STORAGE_KEYS = {
   BANK: 'defreeze_bank_settings',
   RESERVATIONS: 'defreeze_reservations',
   ORGANIZERS: 'defreeze_organizers',
+  QUESTIONNAIRES: 'defreeze_all_questionnaires',
 };
 
 // ==========================================
@@ -161,7 +216,7 @@ export async function updateBankSettings(settings: BankDetails): Promise<boolean
 }
 
 // ==========================================
-// RESERVATIONS
+// RESERVATIONS & LEARNING GOALS
 // ==========================================
 
 export async function getReservations(): Promise<Reservation[]> {
@@ -221,6 +276,7 @@ export async function createReservation(
           email: newRecord.email,
           gender: newRecord.gender,
           questionnaire: newRecord.questionnaire,
+          learning_goals: newRecord.learning_goals,
           receipt_url: newRecord.receipt_url,
           status: 'pending',
         })
@@ -235,6 +291,32 @@ export async function createReservation(
   }
 
   return newRecord;
+}
+
+export async function updateReservationLearningGoals(id: string, learningGoals: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    const all = await getReservations();
+    const updated = all.map((r) =>
+      r.id === id ? { ...r, learning_goals: learningGoals } : r
+    );
+    localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(updated));
+    window.dispatchEvent(new Event('defreeze_reservations_updated'));
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ learning_goals: learningGoals })
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Supabase updateReservationLearningGoals error:', err);
+    }
+  }
+
+  return true;
 }
 
 export async function confirmReservationPayment(id: string): Promise<boolean> {
@@ -277,6 +359,103 @@ export async function getSpotsRemaining(): Promise<{ remaining: number; total: n
   const remaining = Math.max(0, total - confirmedCount);
 
   return { remaining, total, confirmedCount };
+}
+
+// ==========================================
+// COLLATED YOUTH QUESTIONNAIRE RESPONSES
+// ==========================================
+
+export async function submitQuestionnaireResponse(
+  answers: QuestionnaireAnswers,
+  userName?: string,
+  userEmail?: string
+): Promise<QuestionnaireResponse> {
+  const record: QuestionnaireResponse = {
+    id: 'qr-' + Math.random().toString(36).substring(2, 9),
+    ...answers,
+    userName,
+    userEmail,
+    created_at: new Date().toISOString(),
+  };
+
+  if (typeof window !== 'undefined') {
+    const all = await getQuestionnaireResponses();
+    const updated = [record, ...all];
+    localStorage.setItem(STORAGE_KEYS.QUESTIONNAIRES, JSON.stringify(updated));
+    window.dispatchEvent(new Event('defreeze_questionnaires_updated'));
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('questionnaire_responses')
+        .insert({
+          stuck_area: answers.stuckArea,
+          biggest_obstacle: answers.biggestObstacle,
+          growth_goal: answers.growthGoal,
+          readiness_score: answers.readinessScore,
+          user_name: userName,
+          user_email: userEmail,
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        return {
+          id: data.id,
+          stuckArea: data.stuck_area,
+          biggestObstacle: data.biggest_obstacle,
+          growthGoal: data.growth_goal,
+          readinessScore: data.readiness_score,
+          userName: data.user_name,
+          userEmail: data.user_email,
+          created_at: data.created_at,
+        };
+      }
+    } catch (err) {
+      console.error('Supabase submitQuestionnaireResponse error:', err);
+    }
+  }
+
+  return record;
+}
+
+export async function getQuestionnaireResponses(): Promise<QuestionnaireResponse[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('questionnaire_responses')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data && data.length > 0) {
+        return data.map((d) => ({
+          id: d.id,
+          stuckArea: d.stuck_area,
+          biggestObstacle: d.biggest_obstacle,
+          growthGoal: d.growth_goal,
+          readinessScore: d.readiness_score,
+          userName: d.user_name,
+          userEmail: d.user_email,
+          created_at: d.created_at,
+        }));
+      }
+    } catch (err) {
+      console.warn('Supabase getQuestionnaireResponses fallback:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const cached = localStorage.getItem(STORAGE_KEYS.QUESTIONNAIRES);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch {}
+    } else {
+      localStorage.setItem(STORAGE_KEYS.QUESTIONNAIRES, JSON.stringify(INITIAL_QUESTIONNAIRE_RESPONSES));
+      return INITIAL_QUESTIONNAIRE_RESPONSES;
+    }
+  }
+
+  return INITIAL_QUESTIONNAIRE_RESPONSES;
 }
 
 // ==========================================

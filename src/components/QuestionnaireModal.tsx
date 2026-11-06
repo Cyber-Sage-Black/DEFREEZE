@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { QuestionnaireAnswers } from '@/types';
+import { submitQuestionnaireResponse } from '@/lib/storage';
 import { Compass, CheckCircle2, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 
 interface QuestionnaireModalProps {
@@ -26,6 +27,8 @@ export default function QuestionnaireModal({ isOpen, onComplete }: Questionnaire
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_questionnaire_answers', JSON.stringify(answers));
     }
+    // Automatically submit to collated youth responses repository
+    submitQuestionnaireResponse(answers);
     onComplete(answers);
   };
 
