@@ -24,7 +24,16 @@ export default function OrganizersSection() {
 
     const handleUpdate = () => loadTeam();
     window.addEventListener('defreeze_organizers_updated', handleUpdate);
-    return () => window.removeEventListener('defreeze_organizers_updated', handleUpdate);
+
+    // 10-second active poll interval to keep organizer profiles in live sync with Supabase
+    const pollInterval = setInterval(() => {
+      loadTeam();
+    }, 10000);
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('defreeze_organizers_updated', handleUpdate);
+    };
   }, []);
 
   if (!organizers.length) return null;

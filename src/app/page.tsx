@@ -59,6 +59,11 @@ export default function Home() {
         } catch {}
       }
 
+      // 10-second active poll interval to keep spots and countdown in live sync with Supabase
+      const pollInterval = setInterval(() => {
+        refreshSpots();
+      }, 10000);
+
       // Listen for updates from other tabs or admin actions
       const handleStorageUpdate = () => {
         refreshSpots();
@@ -68,6 +73,7 @@ export default function Home() {
       window.addEventListener('defreeze_bank_updated', handleStorageUpdate);
 
       return () => {
+        clearInterval(pollInterval);
         window.removeEventListener('defreeze_reservations_updated', handleStorageUpdate);
         window.removeEventListener('defreeze_bank_updated', handleStorageUpdate);
       };

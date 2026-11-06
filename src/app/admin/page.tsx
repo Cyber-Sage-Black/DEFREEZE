@@ -37,7 +37,8 @@ import {
   UploadCloud,
   Brain,
   Sparkles,
-  Target
+  Target,
+  RefreshCw
 } from 'lucide-react';
 
 const EMPTY_ORGANIZER: Organizer = {
@@ -77,6 +78,8 @@ export default function AdminPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<Reservation | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [lastSynced, setLastSynced] = useState<string>('');
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Active view tab in admin: 'reservations' | 'youth_insights' | 'organizers' | 'bank'
   const [activeTab, setActiveTab] = useState<'reservations' | 'youth_insights' | 'organizers' | 'bank'>('reservations');
@@ -97,25 +100,38 @@ export default function AdminPage() {
     }
   }, []);
 
-  // Fetch data
-  const loadData = async () => {
-    const [settings, resList, spots, orgList, questList] = await Promise.all([
-      getBankSettings(),
-      getReservations(),
-      getSpotsRemaining(),
-      getOrganizers(),
-      getQuestionnaireResponses(),
-    ]);
-    setBankSettings(settings);
-    setReservations(resList);
-    setSpotsData(spots);
-    setOrganizers(orgList);
-    setYouthResponses(questList);
+  // Fetch data from Supabase
+  const loadData = async (silent = false) => {
+    if (!silent) setIsSyncing(true);
+    try {
+      const [settings, resList, spots, orgList, questList] = await Promise.all([
+        getBankSettings(),
+        getReservations(),
+        getSpotsRemaining(),
+        getOrganizers(),
+        getQuestionnaireResponses(),
+      ]);
+      setBankSettings(settings);
+      setReservations(resList);
+      setSpotsData(spots);
+      setOrganizers(orgList);
+      setYouthResponses(questList);
+      setLastSynced(new Date().toLocaleTimeString());
+    } finally {
+      if (!silent) setIsSyncing(false);
+    }
   };
 
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
+
+      // 10-second active poll interval to keep Supabase tables continuously synchronized
+      const pollInterval = setInterval(() => {
+        loadData(true);
+      }, 10000);
+
+      return () => clearInterval(pollInterval);
     }
   }, [isAuthenticated]);
 
@@ -340,6 +356,27 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Live 10-Second Supabase Sync Status Indicator */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full ice-glass border border-emerald-500/40 text-emerald-400 text-xs font-mono">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Supabase Live Sync (10s)</span>
+              {lastSynced && <span className="text-slate-400">• {lastSynced}</span>}
+            </div>
+
+            {/* Manual Sync Now Button */}
+            <button
+              onClick={() => loadData(false)}
+              disabled={isSyncing}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/70 border border-cyan-700/60 text-xs text-cyan-300 hover:bg-cyan-900/80 transition-colors cursor-pointer disabled:opacity-50"
+              title="Force instant sync with Supabase tables"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+            </button>
+
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-300 hover:text-cyan-300 transition-colors"
