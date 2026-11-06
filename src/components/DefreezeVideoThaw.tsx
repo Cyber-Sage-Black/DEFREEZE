@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, RotateCcw, Snowflake, Zap } from 'lucide-react';
 
 interface DefreezeVideoThawProps {
+  videoSrc?: string;
   onEnded?: () => void;
   onProgress?: (percent: number) => void;
   autoPlay?: boolean;
@@ -15,6 +16,7 @@ interface DefreezeVideoThawProps {
 }
 
 export default function DefreezeVideoThaw({
+  videoSrc = '/videos/defrosting-face-thaw.mp4',
   onEnded,
   onProgress,
   autoPlay = true,
@@ -90,7 +92,7 @@ export default function DefreezeVideoThaw({
     if (autoPlay) {
       playVideo();
     }
-  }, [autoPlay, initialMuted]);
+  }, [autoPlay, initialMuted, videoSrc]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -207,7 +209,7 @@ export default function DefreezeVideoThaw({
       >
         <video
           ref={videoRef}
-          src="/videos/defrosting-face-thaw.mp4"
+          src={videoSrc}
           playsInline
           autoPlay={autoPlay}
           loop={loop}
