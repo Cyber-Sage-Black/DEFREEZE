@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Snowflake, Shield, Heart } from 'lucide-react';
 
 export default function Footer() {
@@ -12,8 +13,8 @@ export default function Footer() {
           {/* Brand & Manifesto Quote */}
           <div className="md:col-span-6 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-950 font-black">
-                <Snowflake className="w-4 h-4 text-slate-950" />
+              <div className="w-9 h-9 relative rounded-full overflow-hidden border border-cyan-400/50 shadow-md shadow-cyan-500/20">
+                <Image src="/images/defreeze-logo.png" alt="DEFREEZE Logo" fill className="object-cover" />
               </div>
               <span className="text-2xl font-black text-white tracking-tighter uppercase">
                 DE<span className="text-cyan-400 ice-glow-text">FREEZE</span>

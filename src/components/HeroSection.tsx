@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ThreeDefreezeMind from './ThreeDefreezeMind';
+import DefreezeHumanThaw from './DefreezeHumanThaw';
 import { ArrowDown, Sparkles, Users, Calendar, MapPin, Zap } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -115,32 +115,14 @@ export default function HeroSection({ remainingSpots, totalSpots, onReserveClick
           </div>
         </div>
 
-        {/* Right Column: Interactive 3D Mind / Character */}
+        {/* Right Column: Visual of Frozen Human Unfreezing */}
         <div className="lg:col-span-5 relative flex items-center justify-center">
-          <div className="relative w-full aspect-square max-w-md lg:max-w-none rounded-3xl ice-glass-glow border border-cyan-500/40 p-2 overflow-hidden shadow-2xl">
-            {/* Top Tape Overlay */}
-            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/80 border border-cyan-400/30 text-[10px] font-mono text-cyan-200 uppercase tracking-widest">
-              <span>● Interactive 3D Mind</span>
-            </div>
-
-            {/* Canvas */}
-            <ThreeDefreezeMind
-              interactive={true}
-              autoThaw={true}
-              height="450px"
-              showControls={false}
-            />
-
-            {/* Bottom Caption */}
-            <div className="absolute bottom-4 inset-x-4 z-20 p-3 rounded-xl bg-slate-950/80 backdrop-blur-md border border-cyan-500/20 text-center">
-              <p className="text-xs font-semibold text-white">
-                Drag or hover to rotate the thawing crystal
-              </p>
-              <p className="text-[10px] text-cyan-400 font-mono mt-0.5">
-                Break free from limiting beliefs • Unleash inner fire
-              </p>
-            </div>
-          </div>
+          <DefreezeHumanThaw
+            size="lg"
+            autoThaw={true}
+            interactive={true}
+            showControls={false}
+          />
         </div>
       </div>
     </section>

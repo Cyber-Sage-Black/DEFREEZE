@@ -11,8 +11,7 @@ import ReservationSection from '@/components/ReservationSection';
 import Footer from '@/components/Footer';
 import SplashModal from '@/components/SplashModal';
 import QuestionnaireModal from '@/components/QuestionnaireModal';
-import PaymentModal from '@/components/PaymentModal';
-import { QuestionnaireAnswers, Reservation } from '@/types';
+import { QuestionnaireAnswers } from '@/types';
 import { getSpotsRemaining } from '@/lib/storage';
 
 export default function Home() {
@@ -34,15 +33,6 @@ export default function Home() {
     remaining: 25,
     total: 25,
     confirmedCount: 0,
-  });
-
-  // Payment Modal State
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [userFormData, setUserFormData] = useState({
-    fullName: '',
-    phone: '',
-    email: '',
-    gender: 'Male',
   });
 
   // Load spots & visit state
@@ -94,16 +84,6 @@ export default function Home() {
   const handleCompleteQuestionnaire = (answers: QuestionnaireAnswers) => {
     setQuestionnaire(answers);
     setShowQuestionnaire(false);
-  };
-
-  const handleOpenPaymentModal = (userData: {
-    fullName: string;
-    phone: string;
-    email: string;
-    gender: string;
-  }) => {
-    setUserFormData(userData);
-    setIsPaymentModalOpen(true);
   };
 
   const scrollToReserve = () => {
@@ -164,23 +144,11 @@ export default function Home() {
           remainingSpots={spotsData.remaining}
           totalSpots={spotsData.total}
           questionnaire={questionnaire}
-          onOpenPaymentModal={handleOpenPaymentModal}
         />
       </main>
 
       {/* 5. Footer */}
       <Footer />
-
-      {/* 6. Payment Pop-up with Editable Bank Details & Receipt Upload */}
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        userData={userFormData}
-        questionnaire={questionnaire}
-        onSuccess={() => {
-          refreshSpots();
-        }}
-      />
     </div>
   );
 }

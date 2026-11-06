@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Snowflake, UserCheck, Shield } from 'lucide-react';
+import Image from 'next/image';
+import { UserCheck, Shield } from 'lucide-react';
 
 interface NavbarProps {
   remainingSpots: number;
@@ -14,10 +15,15 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
   return (
     <header className="fixed top-0 left-0 right-0 z-40 ice-glass border-b border-cyan-500/20 px-4 lg:px-8 py-3.5 transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-950 font-black shadow-md shadow-cyan-500/20 group-hover:scale-105 transition-transform">
-            <Snowflake className="w-4 h-4 text-slate-950 animate-spin" style={{ animationDuration: '10s' }} />
+        {/* Brand with Official Logo */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-9 h-9 relative rounded-full overflow-hidden border-2 border-cyan-400/60 shadow-lg shadow-cyan-500/30 group-hover:scale-105 transition-transform">
+            <Image
+              src="/images/defreeze-logo.png"
+              alt="DEFREEZE Official Logo"
+              fill
+              className="object-cover"
+            />
           </div>
           <div>
             <span className="text-xl font-black tracking-tighter text-white uppercase flex items-center gap-1">
@@ -61,7 +67,7 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
           {/* Reserve CTA */}
           <button
             onClick={onReserveClick}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 active:scale-95"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer"
           >
             <UserCheck className="w-3.5 h-3.5" />
             <span>Reserve Spot</span>

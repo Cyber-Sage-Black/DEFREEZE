@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   getBankSettings, 
   updateBankSettings, 
@@ -195,8 +196,8 @@ export default function AdminPage() {
       <header className="border-b border-cyan-500/20 ice-glass sticky top-0 z-30 px-4 sm:px-8 py-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-slate-950 font-black">
-              <Snowflake className="w-5 h-5 text-slate-950" />
+            <div className="w-10 h-10 relative rounded-full overflow-hidden border-2 border-cyan-400/60 shadow-lg shadow-cyan-500/20">
+              <Image src="/images/defreeze-logo.png" alt="DEFREEZE Logo" fill className="object-cover" />
             </div>
             <div>
               <span className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">

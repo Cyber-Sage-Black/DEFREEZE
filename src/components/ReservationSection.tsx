@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Users, Sparkles, ShieldCheck, Flame, ArrowRight, UserCheck } from 'lucide-react';
 import { QuestionnaireAnswers } from '@/types';
 
@@ -8,7 +9,7 @@ interface ReservationSectionProps {
   remainingSpots: number;
   totalSpots: number;
   questionnaire: QuestionnaireAnswers;
-  onOpenPaymentModal: (userData: {
+  onOpenPaymentModal?: (userData: {
     fullName: string;
     phone: string;
     email: string;
@@ -22,6 +23,7 @@ export default function ReservationSection({
   questionnaire,
   onOpenPaymentModal,
 }: ReservationSectionProps) {
+  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -35,12 +37,14 @@ export default function ReservationSection({
       alert('Please fill in all fields to reserve your spot.');
       return;
     }
-    onOpenPaymentModal({
-      fullName,
-      phone,
-      email,
-      gender,
-    });
+    const payload = { fullName, phone, email, gender };
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('defreeze_pending_reservation', JSON.stringify(payload));
+    }
+    if (onOpenPaymentModal) {
+      onOpenPaymentModal(payload);
+    }
+    router.push('/pay');
   };
 
   return (
