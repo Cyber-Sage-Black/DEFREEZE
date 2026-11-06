@@ -46,11 +46,8 @@ export default function Home() {
     refreshSpots();
 
     if (typeof window !== 'undefined') {
-      const visited = sessionStorage.getItem('defreeze_visited_splash');
-      if (visited === 'true') {
-        setShowSplash(false);
-        setHasVisited(true);
-      }
+      // Clear any legacy visited flag so the entrance modal always stays open on initial visit
+      sessionStorage.removeItem('defreeze_visited_splash');
 
       const cachedQuestions = localStorage.getItem('defreeze_questionnaire_answers');
       if (cachedQuestions) {
@@ -83,7 +80,6 @@ export default function Home() {
   // Handlers for step flow
   const handleEnterFromSplash = () => {
     setShowSplash(false);
-    sessionStorage.setItem('defreeze_visited_splash', 'true');
     // Open questionnaire overlay right after splash
     setShowQuestionnaire(true);
   };
