@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Gamepad2, Users, HeartHandshake, Sparkles, Target, ShieldCheck } from 'lucide-react';
+import { MessagesSquare, Users, HeartHandshake, Sparkles, Target, ShieldCheck } from 'lucide-react';
 
 interface ExperienceSectionProps {
   remainingSpots: number;
@@ -24,16 +24,16 @@ export default function ExperienceSection({
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full ice-glass border border-cyan-400/30 text-cyan-300 text-xs font-mono font-semibold uppercase tracking-wider">
-            <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
+            <MessagesSquare className="w-3.5 h-3.5 text-cyan-400" />
             <span>The November 2026 Edition</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight uppercase">
-            An Exclusive Physical Game Experience
+            An Exclusive Physical Conversation Experience
           </h2>
 
           <p className="text-slate-300 text-base sm:text-lg">
-            We&apos;re bringing together strictly <span className="text-cyan-400 font-bold">{totalSpots} people</span>. Not just to play games, but to connect, challenge ourselves, and take a step towards becoming more intentional.
+            We&apos;re bringing together strictly <span className="text-cyan-400 font-bold">{totalSpots} people</span>. Not just to have conversations, but to connect, challenge ourselves, and take a step towards becoming more intentional.
           </p>
         </div>
 
@@ -65,20 +65,20 @@ export default function ExperienceSection({
           <div className="lg:col-span-7 space-y-6 order-1 lg:order-2">
             <div className="space-y-4">
               <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
-                Think Games, New Connections &amp; Meaningful Impact
+                Think Real Conversations, New Connections &amp; Meaningful Impact
               </h3>
               <p className="text-slate-300 text-base leading-relaxed">
-                Most social events feel superficial. DEFREEZE is engineered from the ground up to strip away awkward small talk, dissolve barriers, and ignite authentic brotherhood and sisterhood through structured, immersive real-world games.
+                Most social events feel superficial. DEFREEZE is engineered from the ground up to strip away awkward small talk, dissolve barriers, and ignite authentic brotherhood and sisterhood through structured, immersive real-world conversations.
               </p>
             </div>
 
             <div className="space-y-3.5">
               <div className="p-4 rounded-2xl ice-glass border border-cyan-500/20 flex items-start gap-4">
                 <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 mt-1 flex-shrink-0">
-                  <Gamepad2 className="w-5 h-5" />
+                  <MessagesSquare className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-white">Curated Interactive Games</h4>
+                  <h4 className="text-base font-bold text-white">Curated Interactive Conversations</h4>
                   <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
                     Dynamic group challenges designed to test decision-making, stimulate strategic thinking, and provoke laughter and teamwork.
                   </p>

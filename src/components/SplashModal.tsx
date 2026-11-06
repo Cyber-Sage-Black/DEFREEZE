@@ -110,7 +110,7 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
         </div>
 
         <p className="mt-5 text-[11px] text-slate-500 tracking-wide uppercase">
-          Exclusive Physical Game Experience • 25 Spots • November 2026
+          Exclusive Physical Conversation Experience • 25 Spots • November 2026
         </p>
       </div>
     </div>

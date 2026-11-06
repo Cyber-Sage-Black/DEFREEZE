@@ -511,7 +511,7 @@ export default function PaymentPage() {
                     What are you most looking forward to getting or learning at DEFREEZE?
                   </h4>
                   <p className="text-xs text-slate-400 mt-1">
-                    Tell us what breakthroughs or insights you want to walk away with. Our curators will use this to personalize your games and challenge pairings!
+                    Tell us what breakthroughs or insights you want to walk away with. Our curators will use this to personalize your conversations and challenge pairings!
                   </p>
                 </div>
 

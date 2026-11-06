@@ -94,8 +94,8 @@ values
 ),
 (
   'DEFREEZE Experience Team',
-  'Community & Game Dynamics',
-  'Architecting physical games and psychological simulations that break awkward barriers and forge lasting brotherhood and sisterhood.',
+  'Community & Conversation Dynamics',
+  'Architecting physical conversations and psychological simulations that break awkward barriers and forge lasting brotherhood and sisterhood.',
   '/images/defreeze-flyer-friends.jpg',
   'https://instagram.com',
   'https://x.com',

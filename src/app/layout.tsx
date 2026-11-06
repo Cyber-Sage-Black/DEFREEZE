@@ -16,11 +16,11 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://defreeze.vercel.app'),
   title: 'DEFREEZE | Break Free. Become.',
   description:
-    'An exclusive physical game experience this November. 25 spots. One experience. A step towards becoming. Come as you are, leave a little lighter.',
+    'An exclusive physical conversation experience this November. 25 spots. One experience. A step towards becoming. Come as you are, leave a little lighter.',
   keywords: [
     'DEFREEZE',
     'Personal Growth',
-    'Physical Game Experience',
+    'Physical Conversation Experience',
     'Lagos Event',
     'Break Free Become',
     'Youth Empowerment',
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'DEFREEZE | Break Free. Become.',
     description:
-      'An exclusive physical game experience this November. 25 spots. One experience. A step towards becoming.',
+      'An exclusive physical conversation experience this November. 25 spots. One experience. A step towards becoming.',
     images: [
       {
         url: '/images/defreeze-flyer-ice.jpg',

@@ -56,7 +56,7 @@ export default function OrganizersSection() {
           </h2>
 
           <p className="text-slate-400 text-base sm:text-lg">
-            We are intentional young leaders creating the non-judgmental space, games, and environment that allows you to unfreeze and step into your potential.
+            We are intentional young leaders creating the non-judgmental space, conversations, and environment that allows you to unfreeze and step into your potential.
           </p>
         </div>
 

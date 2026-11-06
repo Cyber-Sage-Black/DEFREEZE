@@ -323,8 +323,8 @@ export async function getOrganizers(): Promise<Organizer[]> {
     {
       id: 'b9b9e441-eb14-40a8-9361-b004662b19e8',
       name: 'Second Organiser',
-      role: 'Operations & Game Lead',
-      bio: 'Pioneering physical interactive simulations and group challenges that strip away facades, spark deep brotherhood and sisterhood, and build accountability.',
+      role: 'Operations & Conversation Lead',
+      bio: 'Pioneering physical interactive simulations and group conversations that strip away facades, spark deep brotherhood and sisterhood, and build accountability.',
       image_url: '/images/defreeze-flyer-friends.jpg',
       instagram: 'https://instagram.com',
       twitter: 'https://x.com',

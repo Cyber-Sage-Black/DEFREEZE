@@ -18,7 +18,7 @@ export async function GET() {
     const organizers = (data || []).map((o) => {
       let roleLabel = o.role;
       if (o.role === 'super_admin') roleLabel = 'Founder & Lead Curator';
-      else if (o.role === 'operations_admin') roleLabel = 'Game Mechanics & Operations Lead';
+      else if (o.role === 'operations_admin') roleLabel = 'Conversation & Operations Lead';
 
       return {
         id: o.user_id,

@@ -174,7 +174,7 @@ export default function QuestionnaireModal({ isOpen, onComplete }: Questionnaire
               <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-800/40 flex items-start gap-3">
                 <ShieldCheck className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-slate-300">
-                  Your answers help our team tailor the game mechanics and accountability pairing during the event.
+                  Your answers help our team tailor the conversation sessions and accountability pairing during the event.
                 </p>
               </div>
 

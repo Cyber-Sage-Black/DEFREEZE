@@ -1,7 +1,7 @@
 # DEFREEZE Web Application ❄️✨
 
 > **"Break free. Become."**  
-> An exclusive physical game experience this November. 25 spots. One experience. A step towards becoming.
+> An exclusive physical conversation experience this November. 25 spots. One experience. A step towards becoming.
 
 ---
 
@@ -21,7 +21,7 @@
 3. **High-Impact Main Site (`/` Page)**:
    - **Hero Section**: Continuous 3D interactive crystal character with cursor parallax, capacity status meter, and direct CTA.
    - **The DEFREEZE Manifesto**: The complete story and philosophy (*"What if you're not stuck because you lack potential?"*).
-   - **The Game Experience**: Highlights of the exclusive November 2026 event, showing the official flyer imagery (`defreeze-flyer-friends.jpg` and `defreeze-flyer-ice.jpg`).
+   - **The Conversation Experience**: Highlights of the exclusive November 2026 event, showing the official flyer imagery (`defreeze-flyer-friends.jpg` and `defreeze-flyer-ice.jpg`).
    - **The 4 Pillars**: Shared Experiences, Honest Conversations, Engaging Activities, and Unbreakable Accountability.
    - **Event Details & FAQs**: Logistics, curated Lagos venue, schedule, and cohort criteria.
 

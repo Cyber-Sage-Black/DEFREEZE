@@ -27,7 +27,7 @@ export default function HeroSection({ remainingSpots, totalSpots, onReserveClick
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full ice-glass border border-cyan-400/30 text-cyan-300 text-xs font-mono font-semibold tracking-wider uppercase">
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>25 SPOTS • PHYSICAL GAME EXPERIENCE • NOVEMBER 2026</span>
+            <span>25 SPOTS • PHYSICAL CONVERSATION EXPERIENCE • NOVEMBER 2026</span>
           </div>
 
           {/* Main Title */}
@@ -97,7 +97,7 @@ export default function HeroSection({ remainingSpots, totalSpots, onReserveClick
             <div className="text-left">
               <span className="block text-[10px] text-slate-500 font-mono uppercase">Format</span>
               <span className="text-xs font-bold text-white flex items-center gap-1 mt-0.5">
-                <Zap className="w-3 h-3 text-cyan-400" /> Physical Games
+                <Zap className="w-3 h-3 text-cyan-400" /> Physical Conversations
               </span>
             </div>
             <div className="text-left">

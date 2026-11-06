@@ -129,7 +129,7 @@ export default function Home() {
         {/* Narrative & Story from user brief */}
         <ManifestoSection />
 
-        {/* Game Experience & Flyer showcases */}
+        {/* Conversation Experience & Flyer showcases */}
         <ExperienceSection
           remainingSpots={spotsData.remaining}
           totalSpots={spotsData.total}

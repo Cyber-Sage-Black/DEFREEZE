@@ -43,7 +43,7 @@ export default function Footer() {
               </li>
               <li>
                 <a href="#experience" className="hover:text-cyan-400 transition-colors">
-                  Game Experience
+                  Conversation Experience
                 </a>
               </li>
               <li>

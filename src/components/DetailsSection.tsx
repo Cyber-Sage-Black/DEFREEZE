@@ -14,8 +14,8 @@ export default function DetailsSection() {
       a: "To preserve deep intimacy and psychological safety. In a crowd of 100, you can hide in the corner. In a tight group of 25, every voice is heard, every connection is meaningful, and real accountability thrives.",
     },
     {
-      q: "What kind of games are we playing?",
-      a: "Expect dynamic, highly engaging physical games, team dilemmas, and playful challenges designed to test decision making, reveal behavioral patterns, and spark laughs and breakthroughs.",
+      q: "What kind of conversations and activities are we doing?",
+      a: "Expect dynamic, highly engaging guided conversations, interactive dilemmas, and thought-provoking challenges designed to test decision making, reveal behavioral patterns, and spark laughs and breakthroughs.",
     },
     {
       q: "Where is the venue?",

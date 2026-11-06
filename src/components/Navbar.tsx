@@ -41,7 +41,7 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
             Manifesto
           </a>
           <a href="#experience" className="hover:text-cyan-400 transition-colors">
-            The Game
+            The Conversation
           </a>
           <a href="#pillars" className="hover:text-cyan-400 transition-colors">
             Pillars
