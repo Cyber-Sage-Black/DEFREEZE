@@ -13,6 +13,10 @@ interface SplashModalProps {
 export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
   const [canEnter, setCanEnter] = useState(false);
 
+  const handleThawed = React.useCallback(() => {
+    setCanEnter(true);
+  }, []);
+
   if (!isOpen) return null;
 
   return (
@@ -61,7 +65,7 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
             size="md"
             autoThaw={true}
             showControls={true}
-            onThawed={() => setCanEnter(true)}
+            onThawed={handleThawed}
           />
         </div>
 

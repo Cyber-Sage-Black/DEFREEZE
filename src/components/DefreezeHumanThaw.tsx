@@ -21,37 +21,46 @@ export default function DefreezeHumanThaw({
   className = '',
   size = 'md',
 }: DefreezeHumanThawProps) {
+  const [mounted, setMounted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isThawed, setIsThawed] = useState(false);
-  const progressRef = useRef(0);
   const onThawedRef = useRef(onThawed);
   onThawedRef.current = onThawed;
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Timer interval strictly updates numerical progress without side effects
   useEffect(() => {
     if (!autoThaw) return;
 
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const next = Math.min(100, prev + 2);
-        progressRef.current = next;
-        if (next >= 100 && !isThawed) {
-          setIsThawed(true);
-          if (onThawedRef.current) {
-            onThawedRef.current();
-          }
-        }
-        return next;
+        if (prev >= 100) return 100;
+        return Math.min(100, prev + 2);
       });
     }, 60);
 
     return () => clearInterval(interval);
-  }, [autoThaw, isThawed]);
+  }, [autoThaw]);
+
+  // Separate effect runs outside the render phase to notify parent when thawed
+  useEffect(() => {
+    if (progress >= 100 && !isThawed) {
+      setIsThawed(true);
+      if (onThawedRef.current) {
+        onThawedRef.current();
+      }
+    }
+  }, [progress, isThawed]);
 
   const handleManualThaw = () => {
     setProgress(100);
-    progressRef.current = 100;
     setIsThawed(true);
-    if (onThawed) onThawed();
+    if (onThawedRef.current) {
+      onThawedRef.current();
+    }
   };
 
   // Dimensions based on size
@@ -114,29 +123,32 @@ export default function DefreezeHumanThaw({
             }}
           />
 
-          {/* Floating Ice Shards Breaking Free (Visual Animation) */}
-          {Array.from({ length: 12 }).map((_, i) => {
-            const angle = (i / 12) * Math.PI * 2;
-            const distance = 40 + thawFactor * 90;
-            const x = Math.cos(angle) * distance;
-            const y = Math.sin(angle) * distance;
-            const sizePx = 6 + (i % 4) * 4;
+          {/* Floating Ice Shards Breaking Free - only rendered on client after mounting with rounded integer coordinates to prevent SSR hydration mismatch */}
+          {mounted &&
+            Array.from({ length: 12 }).map((_, i) => {
+              const angle = (i / 12) * Math.PI * 2;
+              const distance = Math.round(40 + thawFactor * 90);
+              const x = Math.round(Math.cos(angle) * distance);
+              const y = Math.round(Math.sin(angle) * distance);
+              const sizePx = 6 + (i % 4) * 4;
+              const rotation = Math.round(i * 30 + thawFactor * 180);
+              const opacityVal = Number((0.3 + thawFactor * 0.7).toFixed(2));
 
-            return (
-              <div
-                key={i}
-                className="absolute pointer-events-none rounded-sm bg-gradient-to-br from-cyan-200 via-sky-300 to-transparent border border-cyan-300/80 shadow-sm shadow-cyan-400 transition-all duration-300"
-                style={{
-                  top: `calc(50% + ${y}px)`,
-                  left: `calc(50% + ${x}px)`,
-                  width: `${sizePx}px`,
-                  height: `${sizePx * 1.5}px`,
-                  transform: `translate(-50%, -50%) rotate(${i * 30 + thawFactor * 180}deg)`,
-                  opacity: 0.3 + thawFactor * 0.7,
-                }}
-              />
-            );
-          })}
+              return (
+                <div
+                  key={i}
+                  className="absolute pointer-events-none rounded-sm bg-gradient-to-br from-cyan-200 via-sky-300 to-transparent border border-cyan-300/80 shadow-sm shadow-cyan-400 transition-all duration-300"
+                  style={{
+                    top: '50%',
+                    left: '50%',
+                    width: `${sizePx}px`,
+                    height: `${sizePx * 1.5}px`,
+                    transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) rotate(${rotation}deg)`,
+                    opacity: opacityVal,
+                  }}
+                />
+              );
+            })}
 
           {/* Inner Light Beams / Sunburst when thawing */}
           {thawFactor > 0.6 && (
