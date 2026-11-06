@@ -73,7 +73,7 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
             size="md"
             autoPlay={true}
             loop={false}
-            initialMuted={true}
+            initialMuted={false}
             showControls={true}
             onEnded={handleThawed}
           />

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, RotateCcw, Snowflake, Zap, Sparkles } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, RotateCcw, Snowflake, Zap } from 'lucide-react';
 
 interface DefreezeVideoThawProps {
   onEnded?: () => void;
@@ -19,17 +19,17 @@ export default function DefreezeVideoThaw({
   onProgress,
   autoPlay = true,
   loop = false,
-  initialMuted = true,
+  initialMuted = false,
   showControls = true,
   className = '',
   size = 'md',
 }: DefreezeVideoThawProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(initialMuted);
+  const [userManuallyPaused, setUserManuallyPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isEnded, setIsEnded] = useState(false);
-  const [hasInteractedSound, setHasInteractedSound] = useState(false);
 
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
@@ -41,32 +41,87 @@ export default function DefreezeVideoThaw({
     const video = videoRef.current;
     if (!video) return;
 
-    video.muted = isMuted;
+    // Explicitly configure sound preference based on initialMuted
+    video.muted = initialMuted;
+    setIsMuted(initialMuted);
+
+    const playVideo = async () => {
+      try {
+        if (!initialMuted) {
+          video.muted = false;
+          setIsMuted(false);
+        }
+        await video.play();
+        setIsPlaying(true);
+        setUserManuallyPaused(false);
+      } catch (err) {
+        console.warn('Direct unmuted autoplay restricted by browser; starting muted and arming instant unmute on first gesture:', err);
+        // Fallback to muted playback so visual defrosting starts immediately without interruption
+        video.muted = true;
+        setIsMuted(true);
+        try {
+          await video.play();
+          setIsPlaying(true);
+        } catch (e) {
+          console.error('Autoplay fallback failed:', e);
+        }
+
+        const enableAudioOnGesture = () => {
+          if (video) {
+            video.muted = false;
+            setIsMuted(false);
+            if (video.paused) {
+              video.play().then(() => setIsPlaying(true)).catch(() => {});
+            }
+          }
+          window.removeEventListener('pointerdown', enableAudioOnGesture, true);
+          window.removeEventListener('click', enableAudioOnGesture, true);
+          window.removeEventListener('touchstart', enableAudioOnGesture, true);
+          window.removeEventListener('keydown', enableAudioOnGesture, true);
+        };
+
+        window.addEventListener('pointerdown', enableAudioOnGesture, { capture: true, once: true });
+        window.addEventListener('click', enableAudioOnGesture, { capture: true, once: true });
+        window.addEventListener('touchstart', enableAudioOnGesture, { capture: true, once: true });
+        window.addEventListener('keydown', enableAudioOnGesture, { capture: true, once: true });
+      }
+    };
 
     if (autoPlay) {
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => setIsPlaying(true))
-          .catch((err) => {
-            console.warn('Autoplay blocked or waiting for user interaction:', err);
-            setIsPlaying(false);
-          });
-      }
+      playVideo();
     }
-  }, [autoPlay, isMuted]);
+  }, [autoPlay, initialMuted]);
 
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
 
     if (video.paused) {
-      video.play();
-      setIsPlaying(true);
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
+      setUserManuallyPaused(false);
     } else {
       video.pause();
       setIsPlaying(false);
+      setUserManuallyPaused(true);
     }
+  };
+
+  const handleContainerClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // If currently muted due to browser policy, tapping the video immediately un-mutes with sound
+    if (isMuted) {
+      video.muted = false;
+      setIsMuted(false);
+      if (video.paused) {
+        video.play().then(() => setIsPlaying(true)).catch(() => {});
+        setUserManuallyPaused(false);
+      }
+      return;
+    }
+
+    togglePlay();
   };
 
   const toggleMute = (e: React.MouseEvent) => {
@@ -77,11 +132,10 @@ export default function DefreezeVideoThaw({
     const nextMuted = !isMuted;
     video.muted = nextMuted;
     setIsMuted(nextMuted);
-    setHasInteractedSound(true);
 
     if (video.paused) {
-      video.play();
-      setIsPlaying(true);
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
+      setUserManuallyPaused(false);
     }
   };
 
@@ -91,8 +145,11 @@ export default function DefreezeVideoThaw({
     if (!video) return;
 
     video.currentTime = 0;
+    video.muted = false;
+    setIsMuted(false);
     video.play();
     setIsPlaying(true);
+    setUserManuallyPaused(false);
     setIsEnded(false);
   };
 
@@ -107,7 +164,6 @@ export default function DefreezeVideoThaw({
       onProgressRef.current(currentPercent);
     }
 
-    // Trigger onEnded when at least 90% played
     if (currentPercent >= 90 && !isEnded && !loop) {
       setIsEnded(true);
       if (onEndedRef.current) {
@@ -146,7 +202,7 @@ export default function DefreezeVideoThaw({
 
       {/* Main Video Container */}
       <div
-        onClick={togglePlay}
+        onClick={handleContainerClick}
         className={`relative ${sizeClasses} rounded-3xl overflow-hidden ice-glass-glow border border-cyan-400/40 transition-all duration-500 shadow-2xl group flex items-center justify-center cursor-pointer bg-slate-950`}
       >
         <video
@@ -156,6 +212,15 @@ export default function DefreezeVideoThaw({
           autoPlay={autoPlay}
           loop={loop}
           muted={isMuted}
+          preload="auto"
+          onPlay={() => {
+            setIsPlaying(true);
+            setUserManuallyPaused(false);
+          }}
+          onPause={() => {
+            if (videoRef.current?.ended) return;
+            setIsPlaying(false);
+          }}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleVideoEnded}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -170,24 +235,28 @@ export default function DefreezeVideoThaw({
         {/* Unmute / Mute Audio Pill with SFX note */}
         <button
           onClick={toggleMute}
-          className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/85 hover:bg-slate-900 border border-cyan-400/50 text-cyan-300 text-xs font-mono font-bold shadow-lg transition-all hover:scale-105 cursor-pointer backdrop-blur-md"
+          className={`absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono font-bold shadow-lg transition-all hover:scale-105 cursor-pointer backdrop-blur-md ${
+            isMuted
+              ? 'bg-amber-950/90 border-amber-400/80 text-amber-200 hover:bg-amber-900 shadow-amber-500/20 animate-pulse'
+              : 'bg-emerald-950/90 border-emerald-400/80 text-emerald-200 hover:bg-emerald-900 shadow-emerald-500/20'
+          }`}
           title={isMuted ? 'Click to enable Defrosting SFX sound' : 'Mute audio'}
         >
           {isMuted ? (
             <>
-              <VolumeX className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span>SFX Off (Click for Sound)</span>
+              <VolumeX className="w-3.5 h-3.5 text-amber-300" />
+              <span>SFX: Tap for Sound 🔊</span>
             </>
           ) : (
             <>
-              <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-300">SFX Audio On</span>
+              <Volume2 className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span>SFX Audio ON 🔊</span>
             </>
           )}
         </button>
 
-        {/* Center Play Overlay Icon when paused */}
-        {!isPlaying && (
+        {/* Center Play Overlay Icon only when user manually paused */}
+        {userManuallyPaused && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity z-10">
             <div className="w-16 h-16 rounded-full bg-cyan-500/90 hover:bg-cyan-400 flex items-center justify-center text-slate-950 shadow-xl shadow-cyan-500/50 hover:scale-110 transition-all">
               <Play className="w-8 h-8 fill-current translate-x-0.5" />
@@ -231,7 +300,7 @@ export default function DefreezeVideoThaw({
               className="text-[11px] font-mono text-cyan-400/80 hover:text-cyan-300 underline underline-offset-4 cursor-pointer mt-1 flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Replay Video ⟲</span>
+              <span>Replay Video with SFX ⟲</span>
             </button>
           </div>
         </div>
