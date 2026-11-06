@@ -28,13 +28,14 @@ export const metadata: Metadata = {
   ],
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+      { url: '/images/defreeze-logo.png?v=2026', type: 'image/png' },
+      { url: '/icon.png?v=2026', type: 'image/png', sizes: '512x512' },
+      { url: '/favicon.ico?v=2026', sizes: 'any' },
     ],
     apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/images/defreeze-logo.png?v=2026', sizes: '180x180', type: 'image/png' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/favicon.ico?v=2026',
   },
   openGraph: {
     title: 'DEFREEZE | Break Free. Become.',
@@ -61,6 +62,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
     >
+      <head>
+        <link rel="icon" type="image/png" href="/images/defreeze-logo.png?v=2026" />
+        <link rel="shortcut icon" href="/favicon.ico?v=2026" />
+        <link rel="apple-touch-icon" href="/images/defreeze-logo.png?v=2026" />
+      </head>
       <body className="min-h-full flex flex-col bg-[#050713] text-slate-100">{children}</body>
     </html>
   );
