@@ -1,4 +1,4 @@
-import { BankDetails, Reservation } from '@/types';
+import { BankDetails, Reservation, Organizer } from '@/types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 const DEFAULT_BANK_DETAILS: BankDetails = {
@@ -62,10 +62,40 @@ const INITIAL_LOCAL_RESERVATIONS: Reservation[] = [
   },
 ];
 
+const INITIAL_ORGANIZERS: Organizer[] = [
+  {
+    id: 'org-1',
+    name: 'Ifeoluwa',
+    role: 'Founder & Lead Curator',
+    bio: 'Dedicated to designing safe, electric spaces for ambitious young minds to break through self-imposed limits, shed comparison, and step boldly into action.',
+    image_url: '/images/defreeze-logo.png',
+    instagram: 'https://instagram.com',
+    twitter: 'https://x.com',
+    linkedin: 'https://linkedin.com',
+    whatsapp: '+2348000000000',
+    created_at: '2026-11-01T12:00:00.000Z',
+  },
+  {
+    id: 'org-2',
+    name: 'DEFREEZE Experience Team',
+    role: 'Game Mechanics & Community Lead',
+    bio: 'Pioneering physical interactive simulations and group challenges that strip away facades, spark deep brotherhood and sisterhood, and build accountability.',
+    image_url: '/images/defreeze-flyer-friends.jpg',
+    instagram: 'https://instagram.com',
+    twitter: 'https://x.com',
+    created_at: '2026-11-02T12:00:00.000Z',
+  },
+];
+
 const STORAGE_KEYS = {
   BANK: 'defreeze_bank_settings',
   RESERVATIONS: 'defreeze_reservations',
+  ORGANIZERS: 'defreeze_organizers',
 };
+
+// ==========================================
+// BANK SETTINGS
+// ==========================================
 
 export async function getBankSettings(): Promise<BankDetails> {
   if (isSupabaseConfigured && supabase) {
@@ -129,6 +159,10 @@ export async function updateBankSettings(settings: BankDetails): Promise<boolean
 
   return true;
 }
+
+// ==========================================
+// RESERVATIONS
+// ==========================================
 
 export async function getReservations(): Promise<Reservation[]> {
   if (isSupabaseConfigured && supabase) {
@@ -243,4 +277,112 @@ export async function getSpotsRemaining(): Promise<{ remaining: number; total: n
   const remaining = Math.max(0, total - confirmedCount);
 
   return { remaining, total, confirmedCount };
+}
+
+// ==========================================
+// ORGANIZERS & TEAM PROFILES
+// ==========================================
+
+export async function getOrganizers(): Promise<Organizer[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('organizers')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error && data && data.length > 0) {
+        return data as Organizer[];
+      }
+    } catch (err) {
+      console.warn('Supabase getOrganizers fallback:', err);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const cached = localStorage.getItem(STORAGE_KEYS.ORGANIZERS);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch {}
+    } else {
+      localStorage.setItem(STORAGE_KEYS.ORGANIZERS, JSON.stringify(INITIAL_ORGANIZERS));
+      return INITIAL_ORGANIZERS;
+    }
+  }
+
+  return INITIAL_ORGANIZERS;
+}
+
+export async function saveOrganizer(organizer: Organizer): Promise<Organizer> {
+  const isNew = !organizer.id || organizer.id.startsWith('new-');
+  const record: Organizer = {
+    ...organizer,
+    id: isNew ? 'org-' + Math.random().toString(36).substring(2, 9) : organizer.id,
+    created_at: organizer.created_at || new Date().toISOString(),
+  };
+
+  if (typeof window !== 'undefined') {
+    const all = await getOrganizers();
+    const existingIndex = all.findIndex((o) => o.id === record.id);
+    let updated: Organizer[];
+    if (existingIndex >= 0) {
+      updated = [...all];
+      updated[existingIndex] = record;
+    } else {
+      updated = [...all, record];
+    }
+    localStorage.setItem(STORAGE_KEYS.ORGANIZERS, JSON.stringify(updated));
+    window.dispatchEvent(new Event('defreeze_organizers_updated'));
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('organizers')
+        .upsert({
+          id: record.id.startsWith('org-') ? undefined : record.id,
+          name: record.name,
+          role: record.role,
+          bio: record.bio,
+          image_url: record.image_url,
+          instagram: record.instagram,
+          twitter: record.twitter,
+          linkedin: record.linkedin,
+          whatsapp: record.whatsapp,
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        return data as Organizer;
+      }
+    } catch (err) {
+      console.error('Supabase saveOrganizer error:', err);
+    }
+  }
+
+  return record;
+}
+
+export async function deleteOrganizer(id: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    const all = await getOrganizers();
+    const updated = all.filter((o) => o.id !== id);
+    localStorage.setItem(STORAGE_KEYS.ORGANIZERS, JSON.stringify(updated));
+    window.dispatchEvent(new Event('defreeze_organizers_updated'));
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase
+        .from('organizers')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return true;
+    } catch (err) {
+      console.error('Supabase deleteOrganizer error:', err);
+    }
+  }
+
+  return true;
 }

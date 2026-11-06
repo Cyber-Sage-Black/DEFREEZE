@@ -46,6 +46,9 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
           <a href="#pillars" className="hover:text-cyan-400 transition-colors">
             Pillars
           </a>
+          <a href="#organizers" className="hover:text-cyan-400 transition-colors">
+            Organizers
+          </a>
           <a href="#details" className="hover:text-cyan-400 transition-colors">
             Event Info
           </a>

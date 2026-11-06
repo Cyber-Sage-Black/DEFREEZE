@@ -6,6 +6,7 @@ import HeroSection from '@/components/HeroSection';
 import ManifestoSection from '@/components/ManifestoSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import PillarsSection from '@/components/PillarsSection';
+import OrganizersSection from '@/components/OrganizersSection';
 import DetailsSection from '@/components/DetailsSection';
 import ReservationSection from '@/components/ReservationSection';
 import Footer from '@/components/Footer';
@@ -135,6 +136,9 @@ export default function Home() {
 
         {/* The 4 Pillars */}
         <PillarsSection />
+
+        {/* The Organizers & Team */}
+        <OrganizersSection />
 
         {/* Event Details & Logistics */}
         <DetailsSection />

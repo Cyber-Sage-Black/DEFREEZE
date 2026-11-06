@@ -25,3 +25,16 @@ export interface BankDetails {
   amount: string;
   total_spots: number;
 }
+
+export interface Organizer {
+  id: string;
+  name: string;
+  role: string;
+  bio?: string;
+  image_url: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+  whatsapp?: string;
+  created_at?: string;
+}

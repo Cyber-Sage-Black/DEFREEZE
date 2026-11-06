@@ -8,9 +8,12 @@ import {
   updateBankSettings, 
   getReservations, 
   confirmReservationPayment, 
-  getSpotsRemaining 
+  getSpotsRemaining,
+  getOrganizers,
+  saveOrganizer,
+  deleteOrganizer
 } from '@/lib/storage';
-import { BankDetails, Reservation } from '@/types';
+import { BankDetails, Reservation, Organizer } from '@/types';
 import { 
   ShieldCheck, 
   Lock, 
@@ -27,8 +30,23 @@ import {
   Snowflake,
   ExternalLink,
   MessageCircle,
-  AlertTriangle
+  Plus,
+  Trash2,
+  Edit,
+  UploadCloud
 } from 'lucide-react';
+
+const EMPTY_ORGANIZER: Organizer = {
+  id: '',
+  name: '',
+  role: '',
+  bio: '',
+  image_url: '/images/defreeze-logo.png',
+  instagram: '',
+  twitter: '',
+  linkedin: '',
+  whatsapp: '',
+};
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -44,12 +62,21 @@ export default function AdminPage() {
     total_spots: 25,
   });
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [organizers, setOrganizers] = useState<Organizer[]>([]);
   const [spotsData, setSpotsData] = useState({ remaining: 25, total: 25, confirmedCount: 0 });
+  
+  // Filter & Search
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<Reservation | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Organizer Modal Form State
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const [orgForm, setOrgForm] = useState<Organizer>(EMPTY_ORGANIZER);
+  const [orgImagePreview, setOrgImagePreview] = useState<string>('');
+  const [orgSaveSuccess, setOrgSaveSuccess] = useState(false);
 
   // Check existing session
   useEffect(() => {
@@ -63,14 +90,16 @@ export default function AdminPage() {
 
   // Fetch data
   const loadData = async () => {
-    const [settings, resList, spots] = await Promise.all([
+    const [settings, resList, spots, orgList] = await Promise.all([
       getBankSettings(),
       getReservations(),
       getSpotsRemaining(),
+      getOrganizers(),
     ]);
     setBankSettings(settings);
     setReservations(resList);
     setSpotsData(spots);
+    setOrganizers(orgList);
   };
 
   useEffect(() => {
@@ -105,6 +134,60 @@ export default function AdminPage() {
       await confirmReservationPayment(id);
       await loadData();
     }
+  };
+
+  // Organizer Management
+  const handleOpenNewOrganizer = () => {
+    setOrgForm({
+      ...EMPTY_ORGANIZER,
+      id: 'new-' + Date.now(),
+    });
+    setOrgImagePreview('/images/defreeze-logo.png');
+    setShowOrgModal(true);
+  };
+
+  const handleEditOrganizer = (org: Organizer) => {
+    setOrgForm(org);
+    setOrgImagePreview(org.image_url || '/images/defreeze-logo.png');
+    setShowOrgModal(true);
+  };
+
+  const handleDeleteOrganizer = async (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete ${name}'s profile from the website?`)) {
+      await deleteOrganizer(id);
+      await loadData();
+    }
+  };
+
+  const handleOrgPictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setOrgImagePreview(base64);
+        setOrgForm((prev) => ({ ...prev, image_url: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveOrganizerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgForm.name || !orgForm.role) {
+      alert('Name and Role are required.');
+      return;
+    }
+    await saveOrganizer({
+      ...orgForm,
+      image_url: orgImagePreview || orgForm.image_url || '/images/defreeze-logo.png',
+    });
+    setOrgSaveSuccess(true);
+    setTimeout(() => {
+      setOrgSaveSuccess(false);
+      setShowOrgModal(false);
+    }, 1200);
+    await loadData();
   };
 
   const exportCSV = () => {
@@ -147,8 +230,8 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#030612] text-white">
         <div className="w-full max-w-md ice-glass-glow rounded-3xl p-8 border border-cyan-500/30 text-center space-y-6 shadow-2xl">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center border border-cyan-400/40 shadow-lg shadow-cyan-500/20">
-            <Lock className="w-8 h-8" />
+          <div className="w-16 h-16 mx-auto rounded-full overflow-hidden border-2 border-cyan-400/60 p-1 bg-slate-900 shadow-lg shadow-cyan-500/20">
+            <Image src="/images/defreeze-logo.png" alt="DEFREEZE Logo" width={64} height={64} className="rounded-full object-cover" />
           </div>
 
           <div>
@@ -156,7 +239,7 @@ export default function AdminPage() {
               DEFREEZE Admin Portal
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Enter authorized administrator passcode to manage reservations &amp; bank accounts.
+              Enter authorized administrator passcode to manage reservations, bank accounts &amp; team.
             </p>
           </div>
 
@@ -175,7 +258,7 @@ export default function AdminPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/25 hover:scale-[1.01]"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-sm uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/25 hover:scale-[1.01] cursor-pointer"
             >
               Unlock Dashboard
             </button>
@@ -203,7 +286,7 @@ export default function AdminPage() {
               <span className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
                 DEFREEZE <span className="text-xs text-cyan-400 font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800">Admin Control</span>
               </span>
-              <p className="text-[11px] text-slate-400">Review receipts, manage bank details &amp; track 25-spot countdown</p>
+              <p className="text-[11px] text-slate-400">Review receipts, manage bank details, team profiles &amp; track 25-spot countdown</p>
             </div>
           </div>
 
@@ -220,7 +303,7 @@ export default function AdminPage() {
                 sessionStorage.removeItem('defreeze_admin_auth');
                 setIsAuthenticated(false);
               }}
-              className="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-800/40 text-xs text-red-300 hover:bg-red-900/50 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-800/40 text-xs text-red-300 hover:bg-red-900/50 transition-colors cursor-pointer"
             >
               Lock / Sign Out
             </button>
@@ -293,7 +376,7 @@ export default function AdminPage() {
                 Bank Details &amp; Spot Limit Manager
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Changes saved here reflect immediately on the user-facing payment pop-up.
+                Changes saved here reflect immediately on the user-facing payment page.
               </p>
             </div>
 
@@ -382,6 +465,88 @@ export default function AdminPage() {
               </div>
             </div>
           </form>
+        </section>
+
+        {/* SECTION: ORGANIZERS & TEAM PROFILES MANAGEMENT */}
+        <section className="p-6 sm:p-8 rounded-3xl ice-glass-glow border border-cyan-500/30 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/20 pb-4">
+            <div>
+              <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider block">
+                Team &amp; Organizers
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                About The Organizers Profiles
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Add, edit, or remove team profiles, upload headshots directly, and attach social media accounts.
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenNewOrganizer}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-cyan-500/25 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Organizer Profile</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {organizers.map((org) => (
+              <div
+                key={org.id}
+                className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-cyan-500/40 transition-colors"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-cyan-400/50 bg-slate-950 flex-shrink-0">
+                      <Image
+                        src={org.image_url || '/images/defreeze-logo.png'}
+                        alt={org.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-base">{org.name}</h4>
+                      <p className="text-xs text-cyan-300 font-medium">{org.role}</p>
+                    </div>
+                  </div>
+
+                  {org.bio && (
+                    <p className="text-xs text-slate-400 line-clamp-2 italic">
+                      &ldquo;{org.bio}&rdquo;
+                    </p>
+                  )}
+
+                  {/* Social tags */}
+                  <div className="flex flex-wrap gap-1.5 text-[10px] text-slate-400 font-mono">
+                    {org.instagram && <span className="px-2 py-0.5 rounded bg-slate-800">IG: {org.instagram.replace('https://instagram.com/', '@')}</span>}
+                    {org.twitter && <span className="px-2 py-0.5 rounded bg-slate-800">X: {org.twitter.replace('https://x.com/', '@')}</span>}
+                    {org.whatsapp && <span className="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400">WA: {org.whatsapp}</span>}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                  <button
+                    onClick={() => handleEditOrganizer(org)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-cyan-300 transition-colors cursor-pointer"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteOrganizer(org.id, org.name)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/40 hover:bg-red-900/50 text-xs text-red-300 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* SECTION: RESERVATIONS REVIEW TABLE */}
@@ -562,6 +727,181 @@ export default function AdminPage() {
         </section>
       </main>
 
+      {/* MODAL: ORGANIZER PROFILE EDITOR / CREATOR */}
+      {showOrgModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
+          <div className="relative max-w-xl w-full ice-glass-glow rounded-3xl p-6 sm:p-8 border border-cyan-500/30 text-white space-y-6 my-auto">
+            <button
+              onClick={() => setShowOrgModal(false)}
+              className="absolute top-5 right-5 p-2 rounded-full bg-slate-800 text-slate-300 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div>
+              <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest block">
+                Organizer Profile
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                {orgForm.name ? `Edit: ${orgForm.name}` : 'Add New Organizer'}
+              </h3>
+            </div>
+
+            <form onSubmit={handleSaveOrganizerSubmit} className="space-y-4">
+              {/* Picture Upload directly from computer */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  Profile Picture (Upload Image File)
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-cyan-400/60 bg-slate-900 flex-shrink-0 shadow-md">
+                    <Image
+                      src={orgImagePreview || '/images/defreeze-logo.png'}
+                      alt="Organizer Preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+
+                  <label className="flex-1 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 rounded-2xl p-4 text-center cursor-pointer bg-slate-900/60 hover:bg-slate-900/90 transition-all">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleOrgPictureUpload}
+                      className="hidden"
+                    />
+                    <UploadCloud className="w-6 h-6 text-cyan-400 mx-auto mb-1 animate-bounce" />
+                    <span className="text-xs font-bold text-white block">
+                      Click to choose photo from computer
+                    </span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      JPG, PNG, WebP supported
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Name & Role */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Ifeoluwa"
+                    value={orgForm.name}
+                    onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Role / Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Founder & Lead Curator"
+                    value={orgForm.role}
+                    onChange={(e) => setOrgForm({ ...orgForm, role: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  Short Bio &amp; Vision
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Share a short quote or vision about their mission for DEFREEZE..."
+                  value={orgForm.bio || ''}
+                  onChange={(e) => setOrgForm({ ...orgForm, bio: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              {/* Social Media Inputs */}
+              <div className="space-y-2">
+                <span className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Social Links &amp; Contact
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-[11px] text-slate-400 mb-0.5 block">Instagram (URL or handle)</span>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://instagram.com/yourname"
+                      value={orgForm.instagram || ''}
+                      onChange={(e) => setOrgForm({ ...orgForm, instagram: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 mb-0.5 block">X / Twitter</span>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://x.com/yourname"
+                      value={orgForm.twitter || ''}
+                      onChange={(e) => setOrgForm({ ...orgForm, twitter: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 mb-0.5 block">LinkedIn</span>
+                    <input
+                      type="text"
+                      placeholder="e.g. https://linkedin.com/in/yourname"
+                      value={orgForm.linkedin || ''}
+                      onChange={(e) => setOrgForm({ ...orgForm, linkedin: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-slate-400 mb-0.5 block">WhatsApp Phone</span>
+                    <input
+                      type="tel"
+                      placeholder="e.g. +2348012345678"
+                      value={orgForm.whatsapp || ''}
+                      onChange={(e) => setOrgForm({ ...orgForm, whatsapp: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {orgSaveSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-300 text-xs font-semibold flex items-center gap-2 border border-emerald-500/40">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Organizer saved successfully!</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowOrgModal(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow-md shadow-cyan-500/25 cursor-pointer"
+                >
+                  Save Organizer Profile
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: FULL RESOLUTION RECEIPT VIEWER */}
       {selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
@@ -625,7 +965,7 @@ export default function AdminPage() {
 
             <button
               onClick={() => setSelectedQuestionnaire(null)}
-              className="w-full py-2.5 rounded-xl bg-slate-800 text-white font-semibold text-xs"
+              className="w-full py-2.5 rounded-xl bg-slate-800 text-white font-semibold text-xs cursor-pointer"
             >
               Close
             </button>
