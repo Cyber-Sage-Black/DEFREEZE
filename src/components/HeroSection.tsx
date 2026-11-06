@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import DefreezeHumanThaw from './DefreezeHumanThaw';
+import DefreezeVideoThaw from './DefreezeVideoThaw';
 import { ArrowDown, Sparkles, Users, Calendar, MapPin, Zap } from 'lucide-react';
 
 interface HeroSectionProps {
@@ -115,12 +115,13 @@ export default function HeroSection({ remainingSpots, totalSpots, onReserveClick
           </div>
         </div>
 
-        {/* Right Column: Visual of Frozen Human Unfreezing */}
+        {/* Right Column: 1080p Defrosting Video */}
         <div className="lg:col-span-5 relative flex items-center justify-center">
-          <DefreezeHumanThaw
-            size="lg"
-            autoThaw={true}
-            interactive={true}
+          <DefreezeVideoThaw
+            size="responsive"
+            autoPlay={true}
+            loop={true}
+            initialMuted={true}
             showControls={false}
           />
         </div>

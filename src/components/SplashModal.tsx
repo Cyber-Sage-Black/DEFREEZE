@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import DefreezeHumanThaw from './DefreezeHumanThaw';
+import React, { useState, useEffect } from 'react';
+import DefreezeVideoThaw from './DefreezeVideoThaw';
 import Image from 'next/image';
 import { Sparkles, ArrowRight, Snowflake } from 'lucide-react';
 
@@ -15,6 +15,14 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
 
   const handleThawed = React.useCallback(() => {
     setCanEnter(true);
+  }, []);
+
+  useEffect(() => {
+    // Failsafe timer so visitors on strict media devices can always proceed after a few seconds
+    const timer = setTimeout(() => {
+      setCanEnter(true);
+    }, 7000);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!isOpen) return null;
@@ -59,13 +67,15 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
           <span className="text-cyan-300 italic font-normal">Come as you are, leave a little lighter.</span>
         </p>
 
-        {/* Visual Component: Human Frozen in Ice, Defreezing & Breaking Out */}
+        {/* Entrance Video: 1080p Defrosting Face with SFX */}
         <div className="my-4 relative">
-          <DefreezeHumanThaw
+          <DefreezeVideoThaw
             size="md"
-            autoThaw={true}
+            autoPlay={true}
+            loop={false}
+            initialMuted={true}
             showControls={true}
-            onThawed={handleThawed}
+            onEnded={handleThawed}
           />
         </div>
 
