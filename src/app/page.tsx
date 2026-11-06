@@ -46,8 +46,15 @@ export default function Home() {
     refreshSpots();
 
     if (typeof window !== 'undefined') {
-      // Clear any legacy visited flag so the entrance modal always stays open on initial visit
-      sessionStorage.removeItem('defreeze_visited_splash');
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceIntro = urlParams.get('intro') === '1';
+
+      // Check if repeat user has elected to skip the entrance popups
+      const skipPopups = localStorage.getItem('defreeze_skip_popups') === 'true';
+      if (skipPopups && !forceIntro) {
+        setShowSplash(false);
+        setShowQuestionnaire(false);
+      }
 
       const cachedQuestions = localStorage.getItem('defreeze_questionnaire_answers');
       if (cachedQuestions) {
@@ -80,13 +87,38 @@ export default function Home() {
   // Handlers for step flow
   const handleEnterFromSplash = () => {
     setShowSplash(false);
-    // Open questionnaire overlay right after splash
-    setShowQuestionnaire(true);
+    // If repeat user already filled questionnaire, bypass it
+    const questionnaireDone = typeof window !== 'undefined' && localStorage.getItem('defreeze_questionnaire_completed') === 'true';
+    if (questionnaireDone) {
+      setShowQuestionnaire(false);
+    } else {
+      setShowQuestionnaire(true);
+    }
+  };
+
+  const handleDirectEnter = () => {
+    setShowSplash(false);
+    setShowQuestionnaire(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defreeze_skip_popups', 'true');
+      localStorage.setItem('defreeze_questionnaire_completed', 'true');
+    }
+  };
+
+  const handleSkipQuestionnaire = () => {
+    setShowQuestionnaire(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defreeze_questionnaire_completed', 'true');
+      localStorage.setItem('defreeze_skip_popups', 'true');
+    }
   };
 
   const handleCompleteQuestionnaire = (answers: QuestionnaireAnswers) => {
     setQuestionnaire(answers);
     setShowQuestionnaire(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defreeze_questionnaire_completed', 'true');
+    }
   };
 
   const scrollToReserve = () => {
@@ -102,12 +134,14 @@ export default function Home() {
       <SplashModal
         isOpen={showSplash}
         onEnter={handleEnterFromSplash}
+        onDirectEnter={handleDirectEnter}
       />
 
       {/* 2. Questionnaire Overlay */}
       <QuestionnaireModal
         isOpen={showQuestionnaire}
         onComplete={handleCompleteQuestionnaire}
+        onSkip={handleSkipQuestionnaire}
       />
 
       {/* 3. Navigation Bar */}

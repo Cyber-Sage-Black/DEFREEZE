@@ -56,6 +56,21 @@ export default function Footer() {
                   Reserve Spot (25 Cap)
                 </a>
               </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('defreeze_skip_popups');
+                      localStorage.removeItem('defreeze_questionnaire_completed');
+                      window.location.href = '/?intro=1';
+                    }
+                  }}
+                  className="hover:text-cyan-400 transition-colors text-left cursor-pointer text-slate-500 hover:text-cyan-300"
+                >
+                  Replay Entrance Intro ❄️
+                </button>
+              </li>
             </ul>
           </div>
 

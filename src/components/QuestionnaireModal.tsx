@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { QuestionnaireAnswers } from '@/types';
 import { submitQuestionnaireResponse } from '@/lib/storage';
-import { Compass, CheckCircle2, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Compass, CheckCircle2, ArrowRight, ShieldCheck, HelpCircle, X } from 'lucide-react';
 
 interface QuestionnaireModalProps {
   isOpen: boolean;
   onComplete: (answers: QuestionnaireAnswers) => void;
+  onSkip?: () => void;
 }
 
-export default function QuestionnaireModal({ isOpen, onComplete }: QuestionnaireModalProps) {
+export default function QuestionnaireModal({ isOpen, onComplete, onSkip }: QuestionnaireModalProps) {
   const [answers, setAnswers] = useState<QuestionnaireAnswers>({
     stuckArea: 'Creative Projects & Ideas',
     biggestObstacle: 'Overthinking & analysis paralysis',
@@ -22,10 +23,23 @@ export default function QuestionnaireModal({ isOpen, onComplete }: Questionnaire
 
   if (!isOpen) return null;
 
+  const handleSkip = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defreeze_questionnaire_completed', 'true');
+      localStorage.setItem('defreeze_skip_popups', 'true');
+    }
+    if (onSkip) {
+      onSkip();
+    } else {
+      onComplete(answers);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_questionnaire_answers', JSON.stringify(answers));
+      localStorage.setItem('defreeze_questionnaire_completed', 'true');
     }
     // Automatically submit to collated youth responses repository
     submitQuestionnaireResponse(answers);
@@ -50,9 +64,21 @@ export default function QuestionnaireModal({ isOpen, onComplete }: Questionnaire
               </h2>
             </div>
           </div>
-          <span className="text-xs font-mono text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700">
-            Step {step} of 2
-          </span>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-700">
+              Step {step} of 2
+            </span>
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-all cursor-pointer border border-slate-700"
+              title="Skip questionnaire & enter site"
+              aria-label="Skip questionnaire"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -118,11 +144,18 @@ export default function QuestionnaireModal({ isOpen, onComplete }: Questionnaire
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="text-xs text-slate-400 hover:text-cyan-300 underline underline-offset-4 transition-colors cursor-pointer"
+                >
+                  Skip questionnaire for now &rarr;
+                </button>
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-all shadow-md shadow-cyan-500/20"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
                 >
                   <span>Next Step</span>
                   <ArrowRight className="w-4 h-4" />
@@ -182,17 +215,26 @@ export default function QuestionnaireModal({ isOpen, onComplete }: Questionnaire
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="text-xs text-slate-400 hover:text-white transition-colors"
+                  className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
                 >
                   ← Back to Step 1
                 </button>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-sm tracking-wide uppercase transition-all shadow-lg shadow-cyan-500/25"
-                >
-                  <span>Enter The Experience</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSkip}
+                    className="text-xs text-slate-400 hover:text-cyan-300 underline underline-offset-4 transition-colors cursor-pointer"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-sm tracking-wide uppercase transition-all shadow-lg shadow-cyan-500/25 cursor-pointer"
+                  >
+                    <span>Enter The Experience</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}

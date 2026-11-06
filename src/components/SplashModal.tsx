@@ -8,14 +8,35 @@ import { Sparkles, ArrowRight, Snowflake } from 'lucide-react';
 interface SplashModalProps {
   isOpen: boolean;
   onEnter: () => void;
+  onDirectEnter?: () => void;
 }
 
-export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
+export default function SplashModal({ isOpen, onEnter, onDirectEnter }: SplashModalProps) {
   const [canEnter, setCanEnter] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(false);
 
   const handleThawed = React.useCallback(() => {
     setCanEnter(true);
   }, []);
+
+  const handleEnterClick = () => {
+    if (rememberChoice && typeof window !== 'undefined') {
+      localStorage.setItem('defreeze_skip_popups', 'true');
+    }
+    onEnter();
+  };
+
+  const handleDirectSkip = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('defreeze_skip_popups', 'true');
+      localStorage.setItem('defreeze_questionnaire_completed', 'true');
+    }
+    if (onDirectEnter) {
+      onDirectEnter();
+    } else {
+      onEnter();
+    }
+  };
 
   useEffect(() => {
     // Failsafe timer so visitors on strict media devices can always proceed after a few seconds
@@ -29,6 +50,16 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#040711]/95 backdrop-blur-2xl transition-all duration-700 overflow-y-auto py-8">
+      {/* Top Right Quick Skip Button for repeat users */}
+      <button
+        onClick={handleDirectSkip}
+        className="absolute top-4 right-4 z-30 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-cyan-400/30 text-cyan-300 hover:text-white text-xs font-mono font-medium transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
+        title="Directly enter website (skips intro & questionnaire)"
+      >
+        <span>Skip Directly to Website</span>
+        <ArrowRight className="w-3.5 h-3.5" />
+      </button>
+
       {/* Background Ambience */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-cyan-600/15 rounded-full blur-[120px]" />
@@ -83,7 +114,7 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
         <div className="mt-2 flex flex-col items-center gap-2 min-h-[58px]">
           {canEnter ? (
             <button
-              onClick={onEnter}
+              onClick={handleEnterClick}
               className="group relative inline-flex items-center gap-3 px-8 py-3.5 rounded-xl font-black text-white text-base bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
             >
               <Sparkles className="w-5 h-5 text-cyan-200 group-hover:rotate-12 transition-transform" />
@@ -99,7 +130,7 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
               <button
                 onClick={() => {
                   setCanEnter(true);
-                  onEnter();
+                  handleEnterClick();
                 }}
                 className="text-xs text-cyan-400/80 hover:text-cyan-300 underline underline-offset-4 transition-colors cursor-pointer"
               >
@@ -109,7 +140,28 @@ export default function SplashModal({ isOpen, onEnter }: SplashModalProps) {
           )}
         </div>
 
-        <p className="mt-5 text-[11px] text-slate-500 tracking-wide uppercase">
+        {/* Repeat User Preferences & Direct Skip Link */}
+        <div className="mt-3 flex flex-col items-center gap-2">
+          <label className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberChoice}
+              onChange={(e) => setRememberChoice(e.target.checked)}
+              className="w-3.5 h-3.5 rounded accent-cyan-400 bg-slate-800 border-slate-700 cursor-pointer"
+            />
+            <span>Remember this device • Don&apos;t show intro on return visits</span>
+          </label>
+
+          <button
+            type="button"
+            onClick={handleDirectSkip}
+            className="text-xs font-mono text-cyan-400 hover:text-cyan-300 underline underline-offset-4 cursor-pointer transition-colors"
+          >
+            Already visited? Skip directly to website &rarr;
+          </button>
+        </div>
+
+        <p className="mt-4 text-[11px] text-slate-500 tracking-wide uppercase">
           Exclusive Physical Conversation Experience • 25 Spots • November 2026
         </p>
       </div>
