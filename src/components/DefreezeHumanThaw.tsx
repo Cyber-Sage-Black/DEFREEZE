@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
-import { Sparkles, Flame, Snowflake, Zap } from 'lucide-react';
+import { Sparkles, Flame, Snowflake, Zap, RotateCcw } from 'lucide-react';
 
 interface DefreezeHumanThawProps {
   onThawed?: () => void;
@@ -11,6 +11,7 @@ interface DefreezeHumanThawProps {
   showControls?: boolean;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  loop?: boolean;
 }
 
 export default function DefreezeHumanThaw({
@@ -20,6 +21,7 @@ export default function DefreezeHumanThaw({
   showControls = true,
   className = '',
   size = 'md',
+  loop = false,
 }: DefreezeHumanThawProps) {
   const [mounted, setMounted] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -31,19 +33,32 @@ export default function DefreezeHumanThaw({
     setMounted(true);
   }, []);
 
-  // Timer interval strictly updates numerical progress without side effects
+  // Timer interval strictly updates numerical progress
   useEffect(() => {
     if (!autoThaw) return;
 
+    let resetTimer: NodeJS.Timeout | null = null;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) return 100;
+        if (prev >= 100) {
+          if (loop && !resetTimer) {
+            resetTimer = setTimeout(() => {
+              setProgress(0);
+              setIsThawed(false);
+              resetTimer = null;
+            }, 2500);
+          }
+          return 100;
+        }
         return Math.min(100, prev + 2);
       });
     }, 60);
 
-    return () => clearInterval(interval);
-  }, [autoThaw]);
+    return () => {
+      clearInterval(interval);
+      if (resetTimer) clearTimeout(resetTimer);
+    };
+  }, [autoThaw, loop]);
 
   // Separate effect runs outside the render phase to notify parent when thawed
   useEffect(() => {
@@ -61,6 +76,11 @@ export default function DefreezeHumanThaw({
     if (onThawedRef.current) {
       onThawedRef.current();
     }
+  };
+
+  const handleResetThaw = () => {
+    setProgress(0);
+    setIsThawed(false);
   };
 
   // Dimensions based on size
@@ -190,14 +210,24 @@ export default function DefreezeHumanThaw({
             />
           </div>
 
-          {progress < 100 && (
-            <button
-              onClick={handleManualThaw}
-              className="text-[11px] font-mono text-cyan-400/80 hover:text-cyan-300 underline underline-offset-4 cursor-pointer mt-1"
-            >
-              Skip thawing animation →
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {progress < 100 ? (
+              <button
+                onClick={handleManualThaw}
+                className="text-[11px] font-mono text-cyan-400/80 hover:text-cyan-300 underline underline-offset-4 cursor-pointer mt-1"
+              >
+                Skip thawing animation →
+              </button>
+            ) : (
+              <button
+                onClick={handleResetThaw}
+                className="text-[11px] font-mono text-cyan-400/80 hover:text-cyan-300 underline underline-offset-4 cursor-pointer mt-1 flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Replay 3D Thaw ⟲</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

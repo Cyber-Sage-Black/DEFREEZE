@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { HelpCircle, CheckCircle, Flame, Snowflake, ShieldAlert } from 'lucide-react';
+import DefreezeHumanThaw from './DefreezeHumanThaw';
 
 export default function ManifestoSection() {
   return (
@@ -78,20 +79,22 @@ export default function ManifestoSection() {
             </div>
           </div>
 
-          {/* Right Column: Visual Flyer Card 1 (Ice Head Flyer) */}
-          <div className="lg:col-span-5 relative group">
-            <div className="relative rounded-3xl overflow-hidden ice-glass-glow border border-cyan-500/40 p-3 shadow-2xl">
-              <div className="relative aspect-[4/5] rounded-2xl overflow-hidden">
-                <Image
-                  src="/images/defreeze-flyer-ice.jpg"
-                  alt="DEFREEZE - It's okay to thaw"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+          {/* Right Column: 3D Thawing Experience (Replaces First Flyer) */}
+          <div className="lg:col-span-5 relative group flex flex-col items-center justify-center">
+            <div className="relative w-full rounded-3xl overflow-hidden ice-glass-glow border border-cyan-500/40 p-4 shadow-2xl flex flex-col items-center">
+              <div className="w-full flex items-center justify-center py-2">
+                <DefreezeHumanThaw
+                  size="md"
+                  autoThaw={true}
+                  interactive={true}
+                  showControls={true}
+                  loop={true}
                 />
               </div>
-              <div className="p-4 text-center space-y-1">
-                <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase">
-                  Official Visual • Concept Art
+              <div className="p-3 text-center space-y-1 w-full border-t border-cyan-500/20 mt-3">
+                <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  3D Thawing Simulation • &ldquo;It&apos;s Okay To Thaw&rdquo;
                 </span>
                 <p className="text-sm font-bold text-white">
                   &ldquo;You don&apos;t need to have it all together here.&rdquo;
