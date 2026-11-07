@@ -160,15 +160,15 @@ export default function Home() {
           onReserveClick={scrollToReserve}
         />
 
-        {/* Claim Your Spot At DEFREEZE (Strictly 25 Slots • Live Capacity) - Elevated to the Top */}
+        {/* Narrative & Story from user brief */}
+        <ManifestoSection />
+
+        {/* Claim Your Spot At DEFREEZE (Strictly 25 Slots • Live Capacity Tracking) - Positioned immediately after Manifesto */}
         <ReservationSection
           remainingSpots={spotsData.remaining}
           totalSpots={spotsData.total}
           questionnaire={questionnaire}
         />
-
-        {/* Narrative & Story from user brief */}
-        <ManifestoSection />
 
         {/* Conversation Experience & Flyer showcases */}
         <ExperienceSection
