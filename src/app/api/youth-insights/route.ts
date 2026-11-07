@@ -20,6 +20,8 @@ export async function GET() {
       let growthGoal = t.topic || '';
       let readinessScore = 9;
 
+      let userEmail = '';
+
       if (t.topic?.includes('[Stuck:') && t.topic?.includes('Obstacle:')) {
         try {
           const parts = t.topic.split('|');
@@ -41,9 +43,17 @@ export async function GET() {
         growthGoal = t.topic.replace('[Program Goal]', '').trim();
         biggestObstacle = 'Awaiting immersion at event';
       } else if (t.topic?.startsWith('[Learning Goal]')) {
-        stuckArea = 'Expectation / Goal';
-        growthGoal = t.topic.replace('[Learning Goal]', '').trim();
-        biggestObstacle = 'Awaiting immersion at event';
+        stuckArea = 'Expectation & Goals';
+        let cleanGoal = t.topic.replace('[Learning Goal]', '').trim();
+        if (cleanGoal.includes('(Email:')) {
+          const parts = cleanGoal.split('(Email:');
+          cleanGoal = parts[0].trim();
+          const extractedEmail = parts[1]?.replace(')', '').trim();
+          if (extractedEmail) userEmail = extractedEmail;
+        }
+        growthGoal = cleanGoal;
+        biggestObstacle = 'Attendee Learning Goal';
+        readinessScore = 10;
       }
 
       return {
@@ -53,7 +63,7 @@ export async function GET() {
         growthGoal,
         readinessScore,
         userName: t.participant_name || 'Youth Participant',
-        userEmail: '',
+        userEmail: userEmail,
         created_at: t.submitted_at || new Date().toISOString(),
       };
     });

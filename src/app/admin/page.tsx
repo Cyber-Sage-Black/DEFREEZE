@@ -612,20 +612,26 @@ export default function AdminPage() {
 
                           <td className="py-4 px-4 text-slate-300">{res.gender}</td>
 
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 max-w-xs">
                             <button
                               onClick={() => setSelectedQuestionnaire(res)}
-                              className="text-left group block"
+                              className="text-left group block w-full"
                             >
-                              <span className="block text-cyan-300 group-hover:underline font-medium">
-                                {res.questionnaire?.stuckArea || 'View Answers'}
+                              <span className="block text-cyan-300 group-hover:underline font-medium text-xs">
+                                {res.questionnaire?.stuckArea || 'Mindset Check-in'}
                               </span>
                               {res.learning_goals ? (
-                                <span className="block text-[11px] text-emerald-300 font-semibold line-clamp-1 mt-0.5">
-                                  Goal: &ldquo;{res.learning_goals}&rdquo;
-                                </span>
+                                <div className="mt-1 p-2 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 shadow-sm">
+                                  <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">
+                                    <Target className="w-3 h-3 text-emerald-400" />
+                                    <span>Program Goal:</span>
+                                  </div>
+                                  <p className="text-[11px] leading-snug font-medium italic line-clamp-2 text-slate-100">
+                                    &ldquo;{res.learning_goals}&rdquo;
+                                  </p>
+                                </div>
                               ) : (
-                                <span className="text-[10px] text-slate-500">
+                                <span className="text-[10px] text-slate-500 block mt-0.5">
                                   Readiness: {res.questionnaire?.readinessScore || 'N/A'}/10 • Click for details
                                 </span>
                               )}

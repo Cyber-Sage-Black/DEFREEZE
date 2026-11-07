@@ -114,9 +114,14 @@ export async function createReservation(
             created_at: resData.reservation.created_at || createdRecord.created_at,
           };
         }
+      } else {
+        const errorText = await res.text();
+        console.error('API createReservation rejected by server:', res.status, errorText);
+        throw new Error('Failed to submit reservation to database. Please try again.');
       }
     } catch (e) {
       console.error('API createReservation error:', e);
+      throw e;
     }
 
     // Save locally
@@ -129,22 +134,41 @@ export async function createReservation(
   return createdRecord;
 }
 
-export async function updateReservationLearningGoals(id: string, learningGoals: string): Promise<boolean> {
+export async function updateReservationLearningGoals(
+  id: string,
+  learningGoals: string,
+  email?: string,
+  fullName?: string,
+  phone?: string
+): Promise<boolean> {
   if (typeof window !== 'undefined') {
     try {
-      await fetch('/api/reservations', {
+      const res = await fetch('/api/reservations', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, learning_goals: learningGoals }),
+        body: JSON.stringify({
+          id,
+          learning_goals: learningGoals,
+          email,
+          full_name: fullName,
+          phone,
+        }),
       });
-    } catch {}
+      if (!res.ok) {
+        console.warn('API updateReservationLearningGoals non-ok status:', res.status);
+      }
+    } catch (e) {
+      console.error('API updateReservationLearningGoals error:', e);
+    }
 
     const cached = localStorage.getItem(STORAGE_KEYS.RESERVATIONS);
     if (cached) {
       try {
         const existing: Reservation[] = JSON.parse(cached);
         const updated = existing.map((r) =>
-          r.id === id ? { ...r, learning_goals: learningGoals } : r
+          r.id === id || (email && r.email?.toLowerCase() === email.toLowerCase())
+            ? { ...r, learning_goals: learningGoals }
+            : r
         );
         localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(updated));
         window.dispatchEvent(new Event('defreeze_reservations_updated'));

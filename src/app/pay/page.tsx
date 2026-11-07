@@ -19,7 +19,8 @@ import {
   User, 
   Edit3, 
   CreditCard,
-  FileCheck
+  FileCheck,
+  Loader2
 } from 'lucide-react';
 
 export default function PaymentPage() {
@@ -58,6 +59,51 @@ export default function PaymentPage() {
   const [learningGoalsInput, setLearningGoalsInput] = useState('');
   const [isSavingGoals, setIsSavingGoals] = useState(false);
   const [goalsSaved, setGoalsSaved] = useState(false);
+  const [isCompressingReceipt, setIsCompressingReceipt] = useState(false);
+
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const maxDim = 1200;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(e.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          resolve(dataUrl);
+        };
+        img.onerror = () => resolve(e.target?.result as string);
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Load user data & bank settings on mount
   useEffect(() => {
@@ -87,15 +133,22 @@ export default function PaymentPage() {
     setTimeout(() => setCopiedField(null), 2500);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setReceiptFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setReceiptPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setIsCompressingReceipt(true);
+      try {
+        const compressed = await compressImage(file);
+        setReceiptPreview(compressed);
+      } catch (err) {
+        console.error('Error compressing receipt:', err);
+        const reader = new FileReader();
+        reader.onloadend = () => setReceiptPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } finally {
+        setIsCompressingReceipt(false);
+      }
     }
   };
 
@@ -127,9 +180,9 @@ export default function PaymentPage() {
           colors: ['#38bdf8', '#60a5fa', '#93c5fd', '#ffffff'],
         });
       } catch {}
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting payment:', err);
-      alert('Unable to submit reservation. Please try again.');
+      alert(err.message || 'Unable to submit reservation. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -140,10 +193,17 @@ export default function PaymentPage() {
     if (!learningGoalsInput.trim() || !submittedReservation) return;
     setIsSavingGoals(true);
     try {
-      await updateReservationLearningGoals(submittedReservation.id, learningGoalsInput.trim());
+      await updateReservationLearningGoals(
+        submittedReservation.id,
+        learningGoalsInput.trim(),
+        userData.email,
+        userData.fullName,
+        userData.phone
+      );
       setGoalsSaved(true);
     } catch (err) {
       console.error('Failed to save learning goals:', err);
+      alert('Could not save your goals. Please try again.');
     } finally {
       setIsSavingGoals(false);
     }
@@ -452,16 +512,24 @@ export default function PaymentPage() {
 
                 <button
                   type="button"
-                  disabled={!receiptPreview || isSubmitting}
+                  disabled={!receiptPreview || isSubmitting || isCompressingReceipt}
                   onClick={handleConfirmPayment}
                   className={`w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all ${
-                    receiptPreview && !isSubmitting
+                    receiptPreview && !isSubmitting && !isCompressingReceipt
                       ? 'bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-slate-950 shadow-xl shadow-emerald-500/25 cursor-pointer'
                       : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                   }`}
                 >
-                  {isSubmitting ? (
-                    <span>Submitting Proof...</span>
+                  {isCompressingReceipt ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Optimizing Receipt...</span>
+                    </span>
+                  ) : isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Submitting Proof...</span>
+                    </span>
                   ) : (
                     <>
                       <span>Confirm Payment</span>
