@@ -37,21 +37,19 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
 
         {/* Center / Navigation Links */}
         <nav className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-wider uppercase text-slate-300">
-          <a href="#about" className="hover:text-cyan-400 transition-colors">
+          <Link href="/#about" className="hover:text-cyan-400 transition-colors">
             Manifesto
-          </a>
-          <a href="#experience" className="hover:text-cyan-400 transition-colors">
+          </Link>
+          <Link href="/#experience" className="hover:text-cyan-400 transition-colors">
             The Conversation
-          </a>
-          <a href="#pillars" className="hover:text-cyan-400 transition-colors">
+          </Link>
+          <Link href="/#pillars" className="hover:text-cyan-400 transition-colors">
             Pillars
-          </a>
-          <a href="#organizers" className="hover:text-cyan-400 transition-colors">
-            Organizers
-          </a>
-          <a href="#details" className="hover:text-cyan-400 transition-colors">
-            Event Info
-          </a>
+          </Link>
+          <Link href="/info" className="hover:text-cyan-400 transition-colors text-cyan-300 flex items-center gap-1">
+            <span>More Info</span>
+            <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-700/60 text-cyan-300">New Tab</span>
+          </Link>
         </nav>
 
         {/* Right CTA & Spots Left Badge */}

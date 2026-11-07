@@ -27,6 +27,7 @@ export default function QuestionnaireModal({ isOpen, onComplete, onSkip }: Quest
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_questionnaire_completed', 'true');
       localStorage.setItem('defreeze_skip_popups', 'true');
+      window.dispatchEvent(new Event('defreeze_unmute_audio'));
     }
     if (onSkip) {
       onSkip();
@@ -40,6 +41,7 @@ export default function QuestionnaireModal({ isOpen, onComplete, onSkip }: Quest
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_questionnaire_answers', JSON.stringify(answers));
       localStorage.setItem('defreeze_questionnaire_completed', 'true');
+      window.dispatchEvent(new Event('defreeze_unmute_audio'));
     }
     // Automatically submit to collated youth responses repository
     submitQuestionnaireResponse(answers);

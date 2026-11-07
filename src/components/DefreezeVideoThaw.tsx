@@ -89,9 +89,24 @@ export default function DefreezeVideoThaw({
       }
     };
 
+    const handleGlobalUnmute = () => {
+      if (video) {
+        video.muted = false;
+        setIsMuted(false);
+        if (video.paused) {
+          video.play().then(() => setIsPlaying(true)).catch(() => {});
+        }
+      }
+    };
+    window.addEventListener('defreeze_unmute_audio', handleGlobalUnmute);
+
     if (autoPlay) {
       playVideo();
     }
+
+    return () => {
+      window.removeEventListener('defreeze_unmute_audio', handleGlobalUnmute);
+    };
   }, [autoPlay, initialMuted, videoSrc]);
 
   const togglePlay = () => {

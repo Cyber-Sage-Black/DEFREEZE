@@ -833,6 +833,7 @@ export default function AdminPage() {
                           src={org.image_url || '/images/defreeze-logo.png'}
                           alt={org.name}
                           fill
+                          unoptimized
                           className="object-cover"
                         />
                       </div>
@@ -1016,6 +1017,7 @@ export default function AdminPage() {
                       src={orgImagePreview || '/images/defreeze-logo.png'}
                       alt="Organizer Preview"
                       fill
+                      unoptimized
                       className="object-cover"
                     />
                   </div>

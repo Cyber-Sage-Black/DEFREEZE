@@ -23,6 +23,9 @@ export default function SplashModal({ isOpen, onEnter, onDirectEnter }: SplashMo
     if (rememberChoice && typeof window !== 'undefined') {
       localStorage.setItem('defreeze_skip_popups', 'true');
     }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('defreeze_unmute_audio'));
+    }
     onEnter();
   };
 
@@ -30,6 +33,7 @@ export default function SplashModal({ isOpen, onEnter, onDirectEnter }: SplashMo
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_skip_popups', 'true');
       localStorage.setItem('defreeze_questionnaire_completed', 'true');
+      window.dispatchEvent(new Event('defreeze_unmute_audio'));
     }
     if (onDirectEnter) {
       onDirectEnter();

@@ -37,24 +37,30 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="#about" className="hover:text-cyan-400 transition-colors">
+                <Link href="/#about" className="hover:text-cyan-400 transition-colors">
                   The Manifesto
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#experience" className="hover:text-cyan-400 transition-colors">
+                <Link href="/#experience" className="hover:text-cyan-400 transition-colors">
                   Conversation Experience
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#pillars" className="hover:text-cyan-400 transition-colors">
+                <Link href="/#pillars" className="hover:text-cyan-400 transition-colors">
                   Four Pillars
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#reserve" className="hover:text-cyan-400 transition-colors">
+                <Link href="/info" className="hover:text-cyan-400 transition-colors text-cyan-300 font-semibold flex items-center gap-1.5">
+                  <span>Curators, Logistics &amp; FAQs</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">Info Tab</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/#reserve" className="hover:text-cyan-400 transition-colors">
                   Reserve Spot (25 Cap)
-                </a>
+                </Link>
               </li>
               <li>
                 <button

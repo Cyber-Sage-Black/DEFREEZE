@@ -310,24 +310,14 @@ export async function getOrganizers(): Promise<Organizer[]> {
   return [
     {
       id: '8d5d2038-6806-45f5-b9fe-9c76d145f8c4',
-      name: 'Emmanuel Olusesi Saheed',
+      name: 'Emmanuel Olusesi',
       role: 'Founder & Lead Curator',
-      bio: 'Dedicated to designing safe, electric spaces for ambitious young minds to break through self-imposed limits, shed comparison, and step boldly into action.',
+      bio: 'Dedicated young leader designing safe, electric spaces for ambitious minds to unfreeze and step boldly into action.',
       image_url: '/images/defreeze-logo.png',
       instagram: 'https://instagram.com',
       twitter: 'https://x.com',
       linkedin: 'https://linkedin.com',
       whatsapp: '+2348143708860',
-      created_at: '2026-10-31T02:51:29.353556+00:00',
-    },
-    {
-      id: 'b9b9e441-eb14-40a8-9361-b004662b19e8',
-      name: 'Second Organiser',
-      role: 'Operations & Conversation Lead',
-      bio: 'Pioneering physical interactive simulations and group conversations that strip away facades, spark deep brotherhood and sisterhood, and build accountability.',
-      image_url: '/images/defreeze-flyer-friends.jpg',
-      instagram: 'https://instagram.com',
-      twitter: 'https://x.com',
       created_at: '2026-10-31T02:51:29.353556+00:00',
     },
   ];

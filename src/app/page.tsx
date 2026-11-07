@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import ManifestoSection from '@/components/ManifestoSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import PillarsSection from '@/components/PillarsSection';
-import OrganizersSection from '@/components/OrganizersSection';
-import DetailsSection from '@/components/DetailsSection';
 import ReservationSection from '@/components/ReservationSection';
 import Footer from '@/components/Footer';
 import SplashModal from '@/components/SplashModal';
 import QuestionnaireModal from '@/components/QuestionnaireModal';
 import { QuestionnaireAnswers } from '@/types';
 import { getSpotsRemaining } from '@/lib/storage';
+import { ArrowRight, Users, Sparkles, HelpCircle } from 'lucide-react';
 
 export default function Home() {
   // Splash & Questionnaire Flow
@@ -160,6 +160,13 @@ export default function Home() {
           onReserveClick={scrollToReserve}
         />
 
+        {/* Claim Your Spot At DEFREEZE (Strictly 25 Slots • Live Capacity) - Elevated to the Top */}
+        <ReservationSection
+          remainingSpots={spotsData.remaining}
+          totalSpots={spotsData.total}
+          questionnaire={questionnaire}
+        />
+
         {/* Narrative & Story from user brief */}
         <ManifestoSection />
 
@@ -173,18 +180,47 @@ export default function Home() {
         {/* The 4 Pillars */}
         <PillarsSection />
 
-        {/* The Organizers & Team */}
-        <OrganizersSection />
+        {/* Dedicated Link Banner to More Info & Curators */}
+        <section className="py-16 bg-gradient-to-b from-[#050814] to-[#040610] border-t border-cyan-500/15">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6">
+            <div className="p-8 sm:p-10 rounded-3xl ice-glass-glow border border-cyan-500/30 text-center space-y-6 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-cyan-500/15 transition-all" />
+              
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full ice-glass border border-cyan-400/40 text-cyan-300 text-xs font-mono font-semibold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Deep Dive Into DEFREEZE</span>
+              </div>
 
-        {/* Event Details & Logistics */}
-        <DetailsSection />
+              <div className="space-y-3">
+                <h3 className="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase">
+                  Meet The Curators &amp; View Full Event Logistics
+                </h3>
+                <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+                  Discover the visionary leaders behind DEFREEZE, check detailed event timings, venue disclosures, and review our full attendee FAQ.
+                </p>
+              </div>
 
-        {/* Reservation Section with live spots countdown */}
-        <ReservationSection
-          remainingSpots={spotsData.remaining}
-          totalSpots={spotsData.total}
-          questionnaire={questionnaire}
-        />
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/info"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                >
+                  <Users className="w-4 h-4 text-slate-950" />
+                  <span>View Curators, Logistics &amp; FAQs</span>
+                  <ArrowRight className="w-4 h-4 text-slate-950" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={scrollToReserve}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  <span>Claim Your Spot (25 Max)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* 5. Footer */}

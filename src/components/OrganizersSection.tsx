@@ -10,7 +10,7 @@ import {
   Sparkles,
   Flame
 } from 'lucide-react';
-import { InstagramIcon, TwitterIcon, LinkedinIcon } from '@/components/SocialIcons';
+import { InstagramIcon, TwitterIcon, LinkedinIcon, WhatsAppIcon } from '@/components/SocialIcons';
 
 export default function OrganizersSection() {
   const [organizers, setOrganizers] = useState<Organizer[]>([]);
@@ -63,7 +63,10 @@ export default function OrganizersSection() {
         {/* Organizers Grid */}
         <div className={`grid grid-cols-1 ${organizers.length === 1 ? 'max-w-md mx-auto' : organizers.length === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'} gap-8`}>
           {organizers.map((org) => {
-            const cleanWhatsapp = org.whatsapp ? org.whatsapp.replace(/[^0-9]/g, '') : '';
+            let cleanWhatsapp = org.whatsapp ? org.whatsapp.replace(/[^0-9]/g, '') : '';
+            if (cleanWhatsapp.startsWith('0') && cleanWhatsapp.length === 11) {
+              cleanWhatsapp = '234' + cleanWhatsapp.slice(1);
+            }
             return (
               <div
                 key={org.id}
@@ -77,6 +80,7 @@ export default function OrganizersSection() {
                         src={org.image_url || '/images/defreeze-logo.png'}
                         alt={org.name}
                         fill
+                        unoptimized
                         className="object-cover"
                       />
                     </div>
@@ -149,10 +153,10 @@ export default function OrganizersSection() {
                         href={`https://wa.me/${cleanWhatsapp}`}
                         target="_blank"
                         rel="noreferrer"
-                        title="WhatsApp"
-                        className="w-8 h-8 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 hover:bg-emerald-900/50 flex items-center justify-center transition-colors"
+                        title="Chat on WhatsApp"
+                        className="w-8 h-8 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/60 hover:border-emerald-400 hover:scale-105 flex items-center justify-center transition-all shadow-md shadow-emerald-900/20"
                       >
-                        <MessageCircle className="w-4 h-4" />
+                        <WhatsAppIcon className="w-4 h-4 fill-current text-emerald-400" />
                       </a>
                     )}
                   </div>

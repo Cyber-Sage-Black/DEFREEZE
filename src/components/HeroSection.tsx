@@ -115,14 +115,14 @@ export default function HeroSection({ remainingSpots, totalSpots, onReserveClick
           </div>
         </div>
 
-        {/* Right Column: 1080p Defrosting Video */}
+        {/* Right Column: 1080p Defrosting Video with Autoplay and Sound */}
         <div className="lg:col-span-5 relative flex items-center justify-center">
           <DefreezeVideoThaw
             videoSrc="/videos/breakfree-hero-thaw.mp4"
             size="responsive"
             autoPlay={true}
             loop={true}
-            initialMuted={true}
+            initialMuted={false}
             showControls={false}
           />
         </div>
