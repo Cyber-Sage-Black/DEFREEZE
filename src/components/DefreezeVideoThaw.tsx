@@ -33,6 +33,10 @@ export default function DefreezeVideoThaw({
   const [progress, setProgress] = useState(0);
   const [isEnded, setIsEnded] = useState(false);
 
+  // Track whether the video has completed its initial playthrough so SFX sound turns off automatically
+  const hasCompletedFirstPlayRef = useRef(false);
+  const lastTimeRef = useRef(0);
+
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
 
@@ -69,7 +73,7 @@ export default function DefreezeVideoThaw({
         }
 
         const enableAudioOnGesture = () => {
-          if (video) {
+          if (video && !hasCompletedFirstPlayRef.current) {
             video.muted = false;
             setIsMuted(false);
             if (video.paused) {
@@ -90,7 +94,7 @@ export default function DefreezeVideoThaw({
     };
 
     const handleGlobalUnmute = () => {
-      if (video) {
+      if (video && !hasCompletedFirstPlayRef.current) {
         video.muted = false;
         setIsMuted(false);
         if (video.paused) {
@@ -127,10 +131,11 @@ export default function DefreezeVideoThaw({
     const video = videoRef.current;
     if (!video) return;
 
-    // If currently muted due to browser policy, tapping the video immediately un-mutes with sound
+    // If currently muted, tapping the video immediately un-mutes with sound (explicit user re-enable)
     if (isMuted) {
       video.muted = false;
       setIsMuted(false);
+      hasCompletedFirstPlayRef.current = true;
       if (video.paused) {
         video.play().then(() => setIsPlaying(true)).catch(() => {});
         setUserManuallyPaused(false);
@@ -150,6 +155,11 @@ export default function DefreezeVideoThaw({
     video.muted = nextMuted;
     setIsMuted(nextMuted);
 
+    // If user explicitly un-mutes, mark so auto-silence doesn't override manual choice
+    if (!nextMuted) {
+      hasCompletedFirstPlayRef.current = true;
+    }
+
     if (video.paused) {
       video.play().then(() => setIsPlaying(true)).catch(() => {});
       setUserManuallyPaused(false);
@@ -164,6 +174,8 @@ export default function DefreezeVideoThaw({
     video.currentTime = 0;
     video.muted = false;
     setIsMuted(false);
+    hasCompletedFirstPlayRef.current = false;
+    lastTimeRef.current = 0;
     video.play();
     setIsPlaying(true);
     setUserManuallyPaused(false);
@@ -181,6 +193,18 @@ export default function DefreezeVideoThaw({
       onProgressRef.current(currentPercent);
     }
 
+    // Auto-silence SFX after first playthrough finishes (either near the end or when loop wraps around to start)
+    const isWrappingAround = lastTimeRef.current > 1 && video.currentTime < lastTimeRef.current;
+    const isNearEnd = video.currentTime >= video.duration - 0.35;
+
+    if (!hasCompletedFirstPlayRef.current && (isWrappingAround || isNearEnd)) {
+      hasCompletedFirstPlayRef.current = true;
+      video.muted = true;
+      setIsMuted(true);
+    }
+
+    lastTimeRef.current = video.currentTime;
+
     if (currentPercent >= 90 && !isEnded && !loop) {
       setIsEnded(true);
       if (onEndedRef.current) {
@@ -192,6 +216,13 @@ export default function DefreezeVideoThaw({
   const handleVideoEnded = () => {
     setIsEnded(true);
     setIsPlaying(false);
+    if (!hasCompletedFirstPlayRef.current) {
+      hasCompletedFirstPlayRef.current = true;
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+      }
+      setIsMuted(true);
+    }
     if (!loop && onEndedRef.current) {
       onEndedRef.current();
     }

@@ -46,9 +46,8 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
           <Link href="/#pillars" className="hover:text-cyan-400 transition-colors">
             Pillars
           </Link>
-          <Link href="/info" className="hover:text-cyan-400 transition-colors text-cyan-300 flex items-center gap-1">
-            <span>More Info</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-700/60 text-cyan-300">New Tab</span>
+          <Link href="/info" className="hover:text-cyan-400 transition-colors">
+            More Info
           </Link>
         </nav>
 

@@ -52,9 +52,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/info" className="hover:text-cyan-400 transition-colors text-cyan-300 font-semibold flex items-center gap-1.5">
-                  <span>Curators, Logistics &amp; FAQs</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-800 text-cyan-400">Info Tab</span>
+                <Link href="/info" className="hover:text-cyan-400 transition-colors">
+                  Curators, Logistics &amp; FAQs
                 </Link>
               </li>
               <li>
