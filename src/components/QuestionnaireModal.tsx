@@ -26,7 +26,6 @@ export default function QuestionnaireModal({ isOpen, onComplete, onSkip }: Quest
   const handleSkip = () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_questionnaire_completed', 'true');
-      localStorage.setItem('defreeze_skip_popups', 'true');
       window.dispatchEvent(new Event('defreeze_unmute_audio'));
     }
     if (onSkip) {

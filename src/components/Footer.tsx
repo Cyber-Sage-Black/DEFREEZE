@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Snowflake, Shield, Heart } from 'lucide-react';
+import { Snowflake, Heart } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -79,23 +79,14 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Organizer / Admin */}
+          {/* Logistics & Location */}
           <div className="md:col-span-3 space-y-3">
             <h4 className="text-xs font-mono font-bold text-white uppercase tracking-widest">
-              Event Management
+              Event Details
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
               Curated physical experience. November 2026. Lagos, Nigeria.
             </p>
-            <div className="pt-2">
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                <span>Admin Review Portal</span>
-              </Link>
-            </div>
           </div>
         </div>
 

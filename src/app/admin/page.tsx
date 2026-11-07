@@ -311,7 +311,7 @@ export default function AdminPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="password"
-              placeholder="Admin Passcode (default: defreeze2026)"
+              placeholder="Enter Admin Passcode"
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 text-center text-sm focus:outline-none focus:border-cyan-400 transition-colors"

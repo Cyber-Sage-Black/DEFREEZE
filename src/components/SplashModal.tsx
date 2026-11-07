@@ -13,16 +13,12 @@ interface SplashModalProps {
 
 export default function SplashModal({ isOpen, onEnter, onDirectEnter }: SplashModalProps) {
   const [canEnter, setCanEnter] = useState(false);
-  const [rememberChoice, setRememberChoice] = useState(false);
 
   const handleThawed = React.useCallback(() => {
     setCanEnter(true);
   }, []);
 
   const handleEnterClick = () => {
-    if (rememberChoice && typeof window !== 'undefined') {
-      localStorage.setItem('defreeze_skip_popups', 'true');
-    }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('defreeze_unmute_audio'));
     }
@@ -31,8 +27,6 @@ export default function SplashModal({ isOpen, onEnter, onDirectEnter }: SplashMo
 
   const handleDirectSkip = () => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('defreeze_skip_popups', 'true');
-      localStorage.setItem('defreeze_questionnaire_completed', 'true');
       window.dispatchEvent(new Event('defreeze_unmute_audio'));
     }
     if (onDirectEnter) {
@@ -144,18 +138,8 @@ export default function SplashModal({ isOpen, onEnter, onDirectEnter }: SplashMo
           )}
         </div>
 
-        {/* Repeat User Preferences & Direct Skip Link */}
+        {/* Direct Skip to Website Link */}
         <div className="mt-3 flex flex-col items-center gap-2">
-          <label className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={rememberChoice}
-              onChange={(e) => setRememberChoice(e.target.checked)}
-              className="w-3.5 h-3.5 rounded accent-cyan-400 bg-slate-800 border-slate-700 cursor-pointer"
-            />
-            <span>Remember this device • Don&apos;t show intro on return visits</span>
-          </label>
-
           <button
             type="button"
             onClick={handleDirectSkip}

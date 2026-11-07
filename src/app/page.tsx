@@ -46,15 +46,9 @@ export default function Home() {
     refreshSpots();
 
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const forceIntro = urlParams.get('intro') === '1';
-
-      // Check if repeat user has elected to skip the entrance popups
-      const skipPopups = localStorage.getItem('defreeze_skip_popups') === 'true';
-      if (skipPopups && !forceIntro) {
-        setShowSplash(false);
-        setShowQuestionnaire(false);
-      }
+      // Clear legacy suppress flag so entrance popup displays reliably for visitors
+      localStorage.removeItem('defreeze_skip_popups');
+      setShowSplash(true);
 
       const cachedQuestions = localStorage.getItem('defreeze_questionnaire_answers');
       if (cachedQuestions) {
@@ -100,7 +94,6 @@ export default function Home() {
     setShowSplash(false);
     setShowQuestionnaire(false);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('defreeze_skip_popups', 'true');
       localStorage.setItem('defreeze_questionnaire_completed', 'true');
     }
   };
@@ -109,7 +102,6 @@ export default function Home() {
     setShowQuestionnaire(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('defreeze_questionnaire_completed', 'true');
-      localStorage.setItem('defreeze_skip_popups', 'true');
     }
   };
 

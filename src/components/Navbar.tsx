@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { UserCheck, Shield } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 
 interface NavbarProps {
   remainingSpots: number;
@@ -72,15 +72,6 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
             <UserCheck className="w-3.5 h-3.5" />
             <span>Reserve Spot</span>
           </button>
-
-          {/* Admin Link */}
-          <Link
-            href="/admin"
-            title="Admin Review Portal"
-            className="p-2 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-slate-800/40 transition-colors"
-          >
-            <Shield className="w-4 h-4" />
-          </Link>
         </div>
       </div>
     </header>
