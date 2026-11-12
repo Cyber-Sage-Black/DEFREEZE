@@ -299,3 +299,27 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Missing reservation id' }, { status: 400 });
+    }
+
+    const admin = createAdminClient();
+    const { error } = await admin.from('registrations').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting reservation:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, id });
+  } catch (err: any) {
+    console.error('Error in /api/reservations DELETE:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

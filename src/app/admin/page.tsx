@@ -8,11 +8,13 @@ import {
   updateBankSettings, 
   getReservations, 
   confirmReservationPayment, 
+  deleteReservation,
   getSpotsRemaining,
   getOrganizers,
   saveOrganizer,
   deleteOrganizer,
-  getQuestionnaireResponses
+  getQuestionnaireResponses,
+  deleteQuestionnaireResponse
 } from '@/lib/storage';
 import { BankDetails, Reservation, Organizer, QuestionnaireResponse } from '@/types';
 import { 
@@ -159,6 +161,20 @@ export default function AdminPage() {
   const handleConfirmPayment = async (id: string, name: string) => {
     if (confirm(`Confirm payment for ${name}? This will count towards the 25 attendee limit.`)) {
       await confirmReservationPayment(id);
+      await loadData();
+    }
+  };
+
+  const handleDeleteReservation = async (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete the reservation for ${name}? This action cannot be undone.`)) {
+      await deleteReservation(id);
+      await loadData();
+    }
+  };
+
+  const handleDeleteYouthResponse = async (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete this survey response from ${name}?`)) {
+      await deleteQuestionnaireResponse(id);
       await loadData();
     }
   };
@@ -667,17 +683,26 @@ export default function AdminPage() {
                           </td>
 
                           <td className="py-4 px-4 text-right">
-                            {res.status !== 'confirmed' ? (
+                            <div className="flex items-center justify-end gap-2">
+                              {res.status !== 'confirmed' ? (
+                                <button
+                                  onClick={() => handleConfirmPayment(res.id, res.full_name)}
+                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  <span>Payment Confirmed</span>
+                                </button>
+                              ) : (
+                                <span className="text-[11px] text-slate-500 font-mono">Spot Allocated</span>
+                              )}
                               <button
-                                onClick={() => handleConfirmPayment(res.id, res.full_name)}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                                onClick={() => handleDeleteReservation(res.id, res.full_name)}
+                                title="Delete reservation"
+                                className="p-1.5 rounded-lg bg-red-950/40 border border-red-800/40 text-red-400 hover:bg-red-900/60 transition-colors cursor-pointer"
                               >
-                                <CheckCircle className="w-3.5 h-3.5" />
-                                <span>Payment Confirmed</span>
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                            ) : (
-                              <span className="text-[11px] text-slate-500 font-mono">Spot Allocated</span>
-                            )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -758,12 +783,13 @@ export default function AdminPage() {
                       <th className="py-3.5 px-4">Biggest Obstacle</th>
                       <th className="py-3.5 px-4">Breakthrough Goal / Vision</th>
                       <th className="py-3.5 px-4 text-center">Readiness</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {filteredYouthResponses.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="text-center py-10 text-slate-500">
+                        <td colSpan={7} className="text-center py-10 text-slate-500">
                           No survey responses match your query.
                         </td>
                       </tr>
@@ -790,6 +816,15 @@ export default function AdminPage() {
                             <span className="inline-block px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 font-bold font-mono">
                               {qr.readinessScore}/10
                             </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              onClick={() => handleDeleteYouthResponse(qr.id, qr.userName || 'Visitor')}
+                              title="Delete response"
+                              className="p-1.5 rounded-lg bg-red-950/40 border border-red-800/40 text-red-400 hover:bg-red-900/60 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </td>
                         </tr>
                       ))

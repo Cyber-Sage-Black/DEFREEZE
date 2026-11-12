@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
 let serverSettingsCache = {
-  bank_name: 'Guaranty Trust Bank (GTBank)',
-  account_number: '0739182390',
-  account_name: 'DEFREEZE INITIATIVE',
+  bank_name: 'OPay Bank',
+  account_number: '8071248484',
+  account_name: 'Olusesi Emmanuel Saheed',
   amount: '₦15,000',
   total_spots: 25,
 };

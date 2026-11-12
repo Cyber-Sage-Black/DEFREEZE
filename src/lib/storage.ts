@@ -1,9 +1,9 @@
 import { BankDetails, Reservation, Organizer, QuestionnaireAnswers, QuestionnaireResponse } from '@/types';
 
 const DEFAULT_BANK_DETAILS: BankDetails = {
-  bank_name: 'Guaranty Trust Bank (GTBank)',
-  account_number: '0739182390',
-  account_name: 'DEFREEZE INITIATIVE',
+  bank_name: 'OPay Bank',
+  account_number: '8071248484',
+  account_name: 'Olusesi Emmanuel Saheed',
   amount: '₦15,000',
   total_spots: 25,
 };
@@ -212,6 +212,33 @@ export async function confirmReservationPayment(id: string): Promise<boolean> {
   return true;
 }
 
+export async function deleteReservation(id: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/reservations?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        console.warn('API deleteReservation error:', res.status);
+      }
+    } catch (err) {
+      console.error('API deleteReservation failed:', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.RESERVATIONS);
+    if (cached) {
+      try {
+        const existing: Reservation[] = JSON.parse(cached);
+        const updated = existing.filter((r) => r.id !== id);
+        localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(updated));
+        window.dispatchEvent(new Event('defreeze_reservations_updated'));
+      } catch {}
+    }
+  }
+
+  return true;
+}
+
 export async function getSpotsRemaining(): Promise<{ remaining: number; total: number; confirmedCount: number }> {
   if (typeof window !== 'undefined') {
     try {
@@ -302,6 +329,33 @@ export async function getQuestionnaireResponses(): Promise<QuestionnaireResponse
   }
 
   return [];
+}
+
+export async function deleteQuestionnaireResponse(id: string): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/youth-insights?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        console.warn('API deleteQuestionnaireResponse error:', res.status);
+      }
+    } catch (err) {
+      console.error('API deleteQuestionnaireResponse failed:', err);
+    }
+
+    const cached = localStorage.getItem(STORAGE_KEYS.QUESTIONNAIRES);
+    if (cached) {
+      try {
+        const existing: QuestionnaireResponse[] = JSON.parse(cached);
+        const updated = existing.filter((q) => q.id !== id);
+        localStorage.setItem(STORAGE_KEYS.QUESTIONNAIRES, JSON.stringify(updated));
+        window.dispatchEvent(new Event('defreeze_questionnaires_updated'));
+      } catch {}
+    }
+  }
+
+  return true;
 }
 
 // ==========================================
