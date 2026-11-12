@@ -81,9 +81,9 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
         </nav>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* Spots Counter Badge (Desktop / Tablet) */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-950/70 border border-cyan-400/30 text-xs font-mono">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-950/70 border border-cyan-400/30 text-xs font-mono flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="text-slate-300">
               Spots:{' '}
@@ -93,28 +93,28 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
             </span>
           </div>
 
-          {/* Reserve CTA */}
+          {/* Reserve CTA Button */}
           <button
             onClick={onReserveClick}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer flex-shrink-0"
           >
             <UserCheck className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">Reserve</span>
-            <span>Spot</span>
+            <span className="hidden sm:inline">Reserve Spot</span>
+            <span className="sm:hidden">Reserve</span>
           </button>
 
-          {/* Mobile Hamburger Menu Toggle Button */}
+          {/* Mobile Hamburger / Sandwich Menu Toggle Button */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="flex md:hidden items-center justify-center w-9 h-9 rounded-xl bg-slate-900/90 border border-cyan-400/50 text-cyan-300 hover:text-white hover:bg-slate-800 transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer flex-shrink-0"
             aria-label="Toggle Navigation Menu"
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? (
-              <X className="w-5 h-5 text-cyan-400" />
+              <X className="w-5 h-5 text-cyan-300" />
             ) : (
-              <Menu className="w-5 h-5 text-cyan-400" />
+              <Menu className="w-5 h-5 text-cyan-300" />
             )}
           </button>
         </div>
