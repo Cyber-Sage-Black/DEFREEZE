@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import PillarsSection from '@/components/PillarsSection';
 import OrganizersSection from '@/components/OrganizersSection';
 import DetailsSection from '@/components/DetailsSection';
 import Footer from '@/components/Footer';
@@ -71,10 +72,13 @@ export default function InfoPage() {
           </div>
         </div>
 
-        {/* 1. Organizers & Curators Team */}
+        {/* 1. Four Pillars of Thawing */}
+        <PillarsSection />
+
+        {/* 2. Organizers & Curators Team */}
         <OrganizersSection />
 
-        {/* 2. Event Logistics & FAQ Breakdown */}
+        {/* 3. Event Logistics & FAQ Breakdown */}
         <DetailsSection />
 
         {/* Bottom CTA to return to Registration */}

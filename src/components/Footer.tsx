@@ -47,7 +47,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#pillars" className="hover:text-cyan-400 transition-colors">
+                <Link href="/info#pillars" className="hover:text-cyan-400 transition-colors">
                   Four Pillars
                 </Link>
               </li>

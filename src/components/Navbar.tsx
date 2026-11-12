@@ -75,9 +75,6 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
           <Link href="/#experience" className="hover:text-cyan-400 transition-colors">
             The Conversation
           </Link>
-          <Link href="/#pillars" className="hover:text-cyan-400 transition-colors">
-            Pillars
-          </Link>
           <Link href="/info" className="hover:text-cyan-400 transition-colors">
             More Info
           </Link>
@@ -159,18 +156,6 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
               <div className="flex items-center gap-3">
                 <MessageSquare className="w-4 h-4 text-cyan-400" />
                 <span>The Conversation</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-500" />
-            </Link>
-
-            <Link
-              href="/#pillars"
-              onClick={handleMobileNavClick}
-              className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-300 border border-transparent hover:border-cyan-500/20 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <Layers className="w-4 h-4 text-cyan-400" />
-                <span>Core Pillars</span>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-500" />
             </Link>

@@ -6,7 +6,6 @@ import Navbar from '@/components/Navbar';
 import HeroSection from '@/components/HeroSection';
 import ManifestoSection from '@/components/ManifestoSection';
 import ExperienceSection from '@/components/ExperienceSection';
-import PillarsSection from '@/components/PillarsSection';
 import ReservationSection from '@/components/ReservationSection';
 import Footer from '@/components/Footer';
 import SplashModal from '@/components/SplashModal';
@@ -168,9 +167,6 @@ export default function Home() {
           totalSpots={spotsData.total}
           onReserveClick={scrollToReserve}
         />
-
-        {/* The 4 Pillars */}
-        <PillarsSection />
 
         {/* Dedicated Link Banner to More Info & Curators */}
         <section className="py-16 bg-gradient-to-b from-[#050814] to-[#040610] border-t border-cyan-500/15">
