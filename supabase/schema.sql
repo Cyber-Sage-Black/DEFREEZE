@@ -9,10 +9,10 @@ create extension if not exists "uuid-ossp";
 -- 1. Admin & System Settings (Bank Details & Spots Config)
 create table if not exists public.admin_settings (
   id text primary key,
-  bank_name text not null default 'Guaranty Trust Bank (GTBank)',
-  account_number text not null default '0739182390',
-  account_name text not null default 'DEFREEZE INITIATIVE',
-  amount text not null default '₦15,000',
+  bank_name text not null default 'OPay Bank',
+  account_number text not null default '8071248484',
+  account_name text not null default 'Olusesi Emmanuel Saheed',
+  amount text not null default '₦5,000',
   total_spots integer not null default 25,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -21,10 +21,10 @@ create table if not exists public.admin_settings (
 insert into public.admin_settings (id, bank_name, account_number, account_name, amount, total_spots)
 values (
   'default',
-  'Guaranty Trust Bank (GTBank)',
-  '0739182390',
-  'DEFREEZE INITIATIVE',
-  '₦15,000',
+  'OPay Bank',
+  '8071248484',
+  'Olusesi Emmanuel Saheed',
+  '₦5,000',
   25
 )
 on conflict (id) do nothing;

@@ -192,7 +192,7 @@ export default function PaymentModal({
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleCopy(bankDetails.amount, 'amount')}
+                    onClick={() => handleCopy(bankDetails.amount.replace(/[^0-9]/g, '') || bankDetails.amount, 'amount')}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold border border-emerald-400/30 transition-all"
                   >
                     {copiedField === 'amount' ? (

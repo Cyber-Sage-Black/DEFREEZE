@@ -4,7 +4,7 @@ const DEFAULT_BANK_DETAILS: BankDetails = {
   bank_name: 'OPay Bank',
   account_number: '8071248484',
   account_name: 'Olusesi Emmanuel Saheed',
-  amount: '₦15,000',
+  amount: '₦5,000',
   total_spots: 25,
 };
 
@@ -47,12 +47,22 @@ export async function updateBankSettings(settings: BankDetails): Promise<boolean
     window.dispatchEvent(new Event('defreeze_bank_updated'));
 
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-    } catch {}
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) {
+          localStorage.setItem(STORAGE_KEYS.BANK, JSON.stringify(data.settings));
+          window.dispatchEvent(new Event('defreeze_bank_updated'));
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('API updateBankSettings error:', e);
+    }
   }
 
   return true;

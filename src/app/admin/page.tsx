@@ -80,6 +80,7 @@ export default function AdminPage() {
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<Reservation | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSavingBank, setIsSavingBank] = useState(false);
   const [lastSynced, setLastSynced] = useState<string>('');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -106,18 +107,31 @@ export default function AdminPage() {
   const loadData = async (silent = false) => {
     if (!silent) setIsSyncing(true);
     try {
-      const [settings, resList, spots, orgList, questList] = await Promise.all([
-        getBankSettings(),
+      const fetchPromises: Promise<any>[] = [
         getReservations(),
         getSpotsRemaining(),
         getOrganizers(),
         getQuestionnaireResponses(),
-      ]);
-      setBankSettings(settings);
-      setReservations(resList);
-      setSpotsData(spots);
-      setOrganizers(orgList);
-      setYouthResponses(questList);
+      ];
+      if (!silent) {
+        fetchPromises.unshift(getBankSettings());
+      }
+
+      const results = await Promise.all(fetchPromises);
+      if (!silent) {
+        const [settings, resList, spots, orgList, questList] = results;
+        setBankSettings(settings);
+        setReservations(resList);
+        setSpotsData(spots);
+        setOrganizers(orgList);
+        setYouthResponses(questList);
+      } else {
+        const [resList, spots, orgList, questList] = results;
+        setReservations(resList);
+        setSpotsData(spots);
+        setOrganizers(orgList);
+        setYouthResponses(questList);
+      }
       setLastSynced(new Date().toLocaleTimeString());
     } finally {
       if (!silent) setIsSyncing(false);
@@ -151,11 +165,20 @@ export default function AdminPage() {
 
   const handleSaveBankSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateBankSettings(bankSettings);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
-    const spots = await getSpotsRemaining();
-    setSpotsData(spots);
+    setIsSavingBank(true);
+    try {
+      await updateBankSettings(bankSettings);
+      const freshSettings = await getBankSettings();
+      setBankSettings(freshSettings);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
+      const spots = await getSpotsRemaining();
+      setSpotsData(spots);
+    } catch (err) {
+      console.error('Failed to save bank settings:', err);
+    } finally {
+      setIsSavingBank(false);
+    }
   };
 
   const handleConfirmPayment = async (id: string, name: string) => {
@@ -1014,10 +1037,11 @@ export default function AdminPage() {
                   />
                   <button
                     type="submit"
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 cursor-pointer"
+                    disabled={isSavingBank}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-cyan-500/20 cursor-pointer disabled:opacity-50"
                   >
                     <Save className="w-3.5 h-3.5" />
-                    <span>Save</span>
+                    <span>{isSavingBank ? 'Saving...' : 'Save'}</span>
                   </button>
                 </div>
               </div>
