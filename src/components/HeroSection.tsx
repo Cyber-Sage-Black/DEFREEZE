@@ -8,13 +8,14 @@ interface HeroSectionProps {
   remainingSpots: number;
   totalSpots: number;
   onReserveClick: () => void;
+  className?: string;
 }
 
-export default function HeroSection({ remainingSpots, totalSpots, onReserveClick }: HeroSectionProps) {
+export default function HeroSection({ remainingSpots, totalSpots, onReserveClick, className }: HeroSectionProps) {
   const percentTaken = Math.round(((totalSpots - remainingSpots) / totalSpots) * 100);
 
   return (
-    <section className="relative min-h-[92vh] pt-28 pb-16 flex items-center justify-center overflow-hidden">
+    <section className={className || "relative min-h-[92vh] pt-28 pb-16 flex items-center justify-center overflow-hidden"}>
       {/* Background Gradients */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[160px]" />

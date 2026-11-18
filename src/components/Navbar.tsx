@@ -69,11 +69,14 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-wider uppercase text-slate-300">
-          <Link href="/#about" className="hover:text-cyan-400 transition-colors">
-            Manifesto
-          </Link>
           <Link href="/#experience" className="hover:text-cyan-400 transition-colors">
             The Conversation
+          </Link>
+          <Link href="/#reserve" className="hover:text-cyan-400 transition-colors">
+            Reserve Spot
+          </Link>
+          <Link href="/#about" className="hover:text-cyan-400 transition-colors">
+            Manifesto
           </Link>
           <Link href="/info" className="hover:text-cyan-400 transition-colors">
             More Info
@@ -137,18 +140,6 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
           {/* Mobile Links List */}
           <nav className="flex flex-col space-y-1 text-sm font-semibold text-slate-200">
             <Link
-              href="/#about"
-              onClick={handleMobileNavClick}
-              className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-300 border border-transparent hover:border-cyan-500/20 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <BookOpen className="w-4 h-4 text-cyan-400" />
-                <span>The Manifesto</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-500" />
-            </Link>
-
-            <Link
               href="/#experience"
               onClick={handleMobileNavClick}
               className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-300 border border-transparent hover:border-cyan-500/20 transition-all"
@@ -156,6 +147,30 @@ export default function Navbar({ remainingSpots, totalSpots, onReserveClick }: N
               <div className="flex items-center gap-3">
                 <MessageSquare className="w-4 h-4 text-cyan-400" />
                 <span>The Conversation</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-500" />
+            </Link>
+
+            <Link
+              href="/#reserve"
+              onClick={handleMobileNavClick}
+              className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-300 border border-transparent hover:border-cyan-500/20 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                <span>Claim Your Spot</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-500" />
+            </Link>
+
+            <Link
+              href="/#about"
+              onClick={handleMobileNavClick}
+              className="flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-cyan-500/10 hover:text-cyan-300 border border-transparent hover:border-cyan-500/20 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-4 h-4 text-cyan-400" />
+                <span>The Manifesto</span>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-500" />
             </Link>

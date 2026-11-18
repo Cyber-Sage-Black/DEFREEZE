@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import HeroSection from '@/components/HeroSection';
 import PillarsSection from '@/components/PillarsSection';
 import OrganizersSection from '@/components/OrganizersSection';
 import DetailsSection from '@/components/DetailsSection';
@@ -72,13 +73,23 @@ export default function InfoPage() {
           </div>
         </div>
 
-        {/* 1. Four Pillars of Thawing */}
+        {/* 1. Deep Dive Hero & Thaw Video */}
+        <HeroSection
+          remainingSpots={spotsData.remaining}
+          totalSpots={spotsData.total}
+          onReserveClick={() => {
+            window.location.href = '/#reserve';
+          }}
+          className="relative py-16 flex items-center justify-center overflow-hidden border-b border-cyan-500/10"
+        />
+
+        {/* 2. Four Pillars of Thawing */}
         <PillarsSection />
 
-        {/* 2. Organizers & Curators Team */}
+        {/* 3. Organizers & Curators Team */}
         <OrganizersSection />
 
-        {/* 3. Event Logistics & FAQ Breakdown */}
+        {/* 4. Event Logistics & FAQ Breakdown */}
         <DetailsSection />
 
         {/* Bottom CTA to return to Registration */}
